@@ -12,10 +12,13 @@ interface Event {
 
 interface Badge {
   id: string
-  recipientName: string
-  recipientEmail: string
-  issuedAt: string
   eventId: string
+  eventTitle: string
+  recipientAddress: string
+  issuerAddress: string
+  transactionHash: string
+  dateIssued: string
+  contractAddress: string
 }
 
 export default function ManageEvent() {
@@ -35,8 +38,7 @@ export default function ManageEvent() {
   } | null>(null)
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
-  const [participantEmail, setParticipantEmail] = useState("")
-  const [participantName, setParticipantName] = useState("")
+  const [developerAddress, setDeveloperAddress] = useState("")
   const [emittingBadge, setEmittingBadge] = useState(false)
   const [badges, setBadges] = useState<Badge[]>([])
 
@@ -69,10 +71,10 @@ export default function ManageEvent() {
 
   const loadBadges = async () => {
     try {
-      const response = await fetch(`/api/badges?eventId=${params.id}`)
+      const response = await fetch(`/api/events/${params.id}/emit-badge`)
       if (response.ok) {
         const data = await response.json()
-        setBadges(data.badges)
+        setBadges(data.badges || [])
       } else {
         console.error("Failed to fetch badges")
       }
@@ -82,31 +84,31 @@ export default function ManageEvent() {
   }
 
   const emitBadge = async () => {
-    if (!participantEmail || !participantName || !event) {
-      alert("Please enter both participant name and email")
+    if (!developerAddress || !event) {
+      alert("Please enter developer's Stellar address")
       return
     }
 
     setEmittingBadge(true)
 
     try {
-      const response = await fetch("/api/badges", {
+      const response = await fetch(`/api/events/${event.id}/emit-badge`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          recipientName: participantName,
-          recipientEmail: participantEmail,
-          eventId: event.id,
+          developerAddress: developerAddress,
+          // In production, this would come from authenticated session
+          issuerSecretKey: "SCDQHQ7YI5PTFVNVJN5QWXQOBVJ4B2PVVFFYZBDGYGZ3KUJJCKXDH5BH"
         }),
       })
 
       if (response.ok) {
-        setParticipantEmail("")
-        setParticipantName("")
+        const result = await response.json()
+        setDeveloperAddress("")
         loadBadges() // Reload badges to show the new one
-        alert(`Badge emitted successfully to ${participantName}!`)
+        alert(`🎉 Badge minted successfully on blockchain!\n\nTransaction: ${result.transactionHash}\nContract: ${result.badge.contractAddress}`)
       } else {
         const errorData = await response.json()
         console.error("Failed to emit badge:", errorData.error)
@@ -181,35 +183,25 @@ export default function ManageEvent() {
             <h3 className="text-lg font-semibold mb-4">Emit Badge to Participant</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="participantName" className="block text-sm font-medium text-gray-700">
-                  Participant Name
+                <label htmlFor="developerAddress" className="block text-sm font-medium text-gray-700">
+                  Developer's Stellar Address
                 </label>
                 <input
                   type="text"
-                  id="participantName"
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={participantName}
-                  onChange={(e) => setParticipantName(e.target.value)}
-                  placeholder="Felipe Lima"
+                  id="developerAddress"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  value={developerAddress}
+                  onChange={(e) => setDeveloperAddress(e.target.value)}
+                  placeholder="GASRBZPFC2SMWC3DQ445L7AJNHGPPEBXMH2XYSSMVULCXXDPYPY7B44X"
                 />
-              </div>
-              <div>
-                <label htmlFor="participantEmail" className="block text-sm font-medium text-gray-700">
-                  Participant Email
-                </label>
-                <input
-                  type="email"
-                  id="participantEmail"
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={participantEmail}
-                  onChange={(e) => setParticipantEmail(e.target.value)}
-                  placeholder="flplima@example.com"
-                />
+                <p className="mt-1 text-xs text-gray-500">
+                  🔗 This will mint a certificate directly to the blockchain
+                </p>
               </div>
             </div>
             <button
               onClick={emitBadge}
-              disabled={emittingBadge || !participantEmail || !participantName}
+              disabled={emittingBadge || !developerAddress}
               className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
             >
               {emittingBadge ? "Emitting..." : "🏆 Emit Badge"}
@@ -223,16 +215,29 @@ export default function ManageEvent() {
                 {badges.map((badge: Badge) => (
                   <div key={badge.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{badge.recipientName}</h4>
-                        <p className="text-sm text-gray-600">{badge.recipientEmail}</p>
-                        <p className="text-xs text-gray-500">
-                          Issued on {new Date(badge.issuedAt).toLocaleDateString()}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-green-700">🏆 {badge.eventTitle}</h4>
+                        <p className="text-sm text-gray-600 font-mono break-all">
+                          📍 {badge.recipientAddress}
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Issued: {new Date(badge.dateIssued).toLocaleDateString()}
+                        </p>
+                        <a
+                          href={`https://stellar.expert/explorer/testnet/tx/${badge.transactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          🔗 View on Blockchain
+                        </a>
                       </div>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        🏆 Event Badge
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded ml-2">
+                        ⛓️ On-Chain
                       </span>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400 font-mono">
+                      Contract: {badge.contractAddress}
                     </div>
                   </div>
                 ))}

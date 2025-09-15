@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { StellarService, CertificateMetadata } from "@/lib/stellar"
+import { CertificateService } from "@/lib/stellar"
 import { Keypair } from "@stellar/stellar-sdk"
 
 export async function POST(request: NextRequest) {
@@ -19,36 +19,34 @@ export async function POST(request: NextRequest) {
     // }
 
     const body = await request.json()
-    const { recipientPublicKey, type, tags, title } = body
+    const { recipientPublicKey, eventId, eventName, issuerSecretKey } = body
 
-    if (!recipientPublicKey || !type || !title) {
+    if (!recipientPublicKey || !eventId || !eventName) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: recipientPublicKey, eventId, eventName" },
         { status: 400 }
       )
     }
 
-    const issuerKeypair = Keypair.random()
-    await StellarService.createAccount()
+    // For demo purposes, create a test issuer keypair
+    // In production, this would come from secure storage or session
+    const issuerKeypair = issuerSecretKey
+      ? Keypair.fromSecret(issuerSecretKey)
+      : Keypair.random()
 
-    const metadata: CertificateMetadata = {
-      issuer: issuerKeypair.publicKey(),
-      type,
-      tags: tags || [],
-      title,
-      dateIssued: new Date().toISOString(),
-    }
-
-    const transactionHash = await StellarService.mintCertificate(
+    const transactionHash = await CertificateService.mintCertificate(
       issuerKeypair,
       recipientPublicKey,
-      metadata
+      eventId,
+      eventName
     )
 
     return NextResponse.json({
       transactionHash,
-      metadata,
-      message: "Certificate minted successfully"
+      issuer: issuerKeypair.publicKey(),
+      eventId,
+      eventName,
+      message: "Certificate minted successfully on smart contract"
     })
   } catch (error) {
     console.error("Error minting certificate:", error)
