@@ -29,6 +29,27 @@ export default function SignIn() {
     }
   }
 
+  const loginAsTestOrg = async () => {
+    try {
+      const response = await fetch("/api/auth/test-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ org: "stellar" }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        localStorage.setItem("test-session", JSON.stringify(data.user))
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      console.error("Test login failed:", error)
+    }
+  }
+
   useEffect(() => {
     getSession().then((session) => {
       if (session) {
@@ -80,12 +101,20 @@ export default function SignIn() {
             Sign in as Organization (LinkedIn)
           </button>
 
-          <button
-            onClick={loginAsTestUser}
-            className="w-full text-xs px-2 py-1 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100"
-          >
-            🧪 Log in as flplima (dev)
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={loginAsTestUser}
+              className="w-full text-xs px-2 py-1 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100"
+            >
+              🧪 Log in as flplima (dev)
+            </button>
+            <button
+              onClick={loginAsTestOrg}
+              className="w-full text-xs px-2 py-1 text-gray-500 hover:text-gray-700 border border-gray-200 rounded-md bg-gray-50 hover:bg-gray-100"
+            >
+              🧪 Log in as Stellar (org)
+            </button>
+          </div>
         </div>
       </div>
     </div>

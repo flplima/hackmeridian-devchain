@@ -167,10 +167,28 @@ export default function Dashboard() {
                       src={currentSession.user?.image || currentSession.image || "/default-org.png"}
                       alt="Organization Logo"
                       className="h-16 w-16 rounded-full"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/64/0066CC/FFFFFF?text=S"
+                      }}
                     />
                     <div>
                       <h4 className="text-xl font-semibold">{currentSession.user?.name || currentSession.name}</h4>
                       <p className="text-gray-600">Organization</p>
+                      {(currentSession.user?.description || currentSession.description) && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {currentSession.user?.description || currentSession.description}
+                        </p>
+                      )}
+                      {(currentSession.user?.website || currentSession.website) && (
+                        <a
+                          href={currentSession.user?.website || currentSession.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          {currentSession.user?.website || currentSession.website}
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
