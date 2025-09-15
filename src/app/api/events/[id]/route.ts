@@ -3,10 +3,11 @@ import { serverDataStore } from "@/lib/server-data-store"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const event = serverDataStore.getEventById(params.id)
+    const { id } = await params
+    const event = serverDataStore.getEventById(id)
 
     if (!event) {
       return NextResponse.json(

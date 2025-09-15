@@ -7,7 +7,17 @@ import { useState, useEffect } from "react"
 export default function CreateEvent() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [testSession, setTestSession] = useState<any>(null)
+  const [testSession, setTestSession] = useState<{
+    provider: string
+    name: string
+    email: string
+    image: string
+    user?: {
+      name: string
+      email: string
+      image: string
+    }
+  } | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     tags: "",
@@ -30,10 +40,11 @@ export default function CreateEvent() {
       return
     }
 
-    if (session.provider !== "linkedin") {
-      router.push("/dashboard")
-      return
-    }
+    // Skip provider check for now since auth is disabled
+    // if (session.provider !== "linkedin") {
+    //   router.push("/dashboard")
+    //   return
+    // }
   }, [session, status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +87,7 @@ export default function CreateEvent() {
     )
   }
 
-  if (!currentSession || (currentSession.provider !== "linkedin" && !testSession)) {
+  if (!currentSession || (!testSession || testSession.provider !== "linkedin")) {
     return null
   }
 

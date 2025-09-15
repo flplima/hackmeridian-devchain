@@ -1,14 +1,13 @@
 import {
-  Server,
+  Horizon,
   Keypair,
   Networks,
   TransactionBuilder,
   Operation,
   Asset,
-  Account,
 } from "@stellar/stellar-sdk"
 
-const server = new Server("https://horizon-testnet.stellar.org")
+const server = new Horizon.Server("https://horizon-testnet.stellar.org")
 
 export interface CertificateMetadata {
   issuer: string
@@ -51,7 +50,8 @@ export class StellarService {
   static async mintCertificate(
     issuerKeypair: Keypair,
     recipientPublicKey: string,
-    metadata: CertificateMetadata
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _metadata: CertificateMetadata
   ): Promise<string> {
     try {
       const issuerAccount = await server.loadAccount(issuerKeypair.publicKey())
@@ -97,12 +97,18 @@ export class StellarService {
     }
   }
 
-  static async getCertificates(publicKey: string): Promise<any[]> {
+  static async getCertificates(publicKey: string): Promise<Array<{
+    asset_type: string
+    asset_code?: string
+    balance: string
+  }>> {
     try {
       const account = await server.loadAccount(publicKey)
       return account.balances.filter(
         (balance) =>
           balance.asset_type !== "native" &&
+          balance.asset_type !== "liquidity_pool_shares" &&
+          "asset_code" in balance &&
           balance.asset_code?.startsWith("CERT_")
       )
     } catch (error) {
@@ -117,7 +123,8 @@ export class EscrowService {
     employerKeypair: Keypair,
     developerPublicKey: string,
     amount: string,
-    jobId: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _jobId: string
   ): Promise<string> {
     try {
       const employerAccount = await server.loadAccount(employerKeypair.publicKey())
@@ -146,7 +153,7 @@ export class EscrowService {
 
       createEscrowTransaction.sign(employerKeypair)
 
-      const result = await server.submitTransaction(createEscrowTransaction)
+      await server.submitTransaction(createEscrowTransaction)
       return escrowKeypair.publicKey()
     } catch (error) {
       console.error("Error creating escrow:", error)

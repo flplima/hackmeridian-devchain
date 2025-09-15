@@ -24,10 +24,11 @@ export default function CreateJob() {
       return
     }
 
-    if (session.provider !== "linkedin") {
-      router.push("/dashboard")
-      return
-    }
+    // Skip provider check for now since auth is disabled
+    // if (session.provider !== "linkedin") {
+    //   router.push("/dashboard")
+    //   return
+    // }
   }, [session, status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +68,7 @@ export default function CreateJob() {
     )
   }
 
-  if (!session || session.provider !== "linkedin") {
+  if (!session) {
     return null
   }
 

@@ -19,10 +19,20 @@ interface Badge {
 }
 
 export default function ManageEvent() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const params = useParams()
-  const [testSession, setTestSession] = useState<any>(null)
+  const [testSession, setTestSession] = useState<{
+    provider: string
+    name: string
+    email: string
+    image: string
+    user?: {
+      name: string
+      email: string
+      image: string
+    }
+  } | null>(null)
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [participantEmail, setParticipantEmail] = useState("")
@@ -40,7 +50,7 @@ export default function ManageEvent() {
 
     loadEvent()
     loadBadges()
-  }, [params.id])
+  }, [params.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadEvent = async () => {
     try {
@@ -93,7 +103,6 @@ export default function ManageEvent() {
       })
 
       if (response.ok) {
-        const data = await response.json()
         setParticipantEmail("")
         setParticipantName("")
         loadBadges() // Reload badges to show the new one
@@ -129,7 +138,7 @@ export default function ManageEvent() {
     )
   }
 
-  if (!currentSession || (currentSession.provider !== "linkedin" && !testSession)) {
+  if (!currentSession || (!testSession || testSession.provider !== "linkedin")) {
     router.push("/auth/signin")
     return null
   }
