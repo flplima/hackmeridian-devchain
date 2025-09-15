@@ -4,6 +4,12 @@ import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+interface Event {
+  id: string
+  title: string
+  tags: string[]
+}
+
 interface GitHubProfile {
   name: string
   login: string
@@ -19,39 +25,64 @@ export default function Dashboard() {
   const [githubProfile, setGithubProfile] = useState<GitHubProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [testSession, setTestSession] = useState<any>(null)
+  const [events, setEvents] = useState<Event[]>([])
+  const [availableEvents, setAvailableEvents] = useState<Event[]>([])
 
   useEffect(() => {
-    const testSessionData = localStorage.getItem("test-session")
-    if (testSessionData) {
-      const parsedTestSession = JSON.parse(testSessionData)
-      setTestSession(parsedTestSession)
-      if (parsedTestSession.provider === "github") {
-        setGithubProfile({
-          name: parsedTestSession.name,
-          login: "flplima",
-          avatar_url: parsedTestSession.image,
-          public_repos: 42,
-          followers: 123,
-          following: 56,
-        })
+    let testSessionData = null
+    let parsedTestSession = null
+
+    if (typeof window !== 'undefined') {
+      testSessionData = localStorage.getItem("test-session")
+      if (testSessionData) {
+        parsedTestSession = JSON.parse(testSessionData)
+        setTestSession(parsedTestSession)
+        if (parsedTestSession.provider === "github") {
+          setGithubProfile({
+            name: parsedTestSession.name,
+            login: "flplima",
+            avatar_url: parsedTestSession.image,
+            public_repos: 42,
+            followers: 123,
+            following: 56,
+          })
+        }
+        setLoading(false)
       }
-      setLoading(false)
-      return
     }
 
-    if (status === "loading") return
+    if (status === "loading" && !testSessionData) return
 
-    if (!session) {
+    if (!session && !testSessionData) {
       router.push("/auth/signin")
       return
     }
 
-    if (session.provider === "github") {
-      fetchGitHubProfile()
+    if ((session?.provider === "github") || (testSessionData && parsedTestSession?.provider === "github")) {
+      if (!testSessionData) {
+        fetchGitHubProfile()
+      }
     } else {
       setLoading(false)
     }
+
+    loadEvents()
   }, [session, status, router])
+
+  const loadEvents = async () => {
+    try {
+      const response = await fetch("/api/events")
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableEvents(data.events)
+        setEvents(data.events)
+      } else {
+        console.error("Failed to fetch events")
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error)
+    }
+  }
 
   const fetchGitHubProfile = async () => {
     try {
@@ -94,7 +125,9 @@ export default function Dashboard() {
             </h1>
             <button
               onClick={() => {
-                localStorage.removeItem("test-session")
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem("test-session")
+                }
                 signOut()
               }}
               className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
@@ -152,6 +185,41 @@ export default function Dashboard() {
                   <p className="text-gray-500">No jobs available at the moment.</p>
                 </div>
               </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Available Events
+                  </h3>
+                  {availableEvents.length > 0 ? (
+                    <div className="space-y-4">
+                      {availableEvents.map((event) => (
+                        <div key={event.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{event.title}</h4>
+                              {event.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {event.tags.map((tag: string, index: number) => (
+                                    <span
+                                      key={index}
+                                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No events available at the moment.</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -207,9 +275,12 @@ export default function Dashboard() {
                       <h4 className="font-medium">Post a Job</h4>
                       <p className="text-sm text-gray-500">Create freelance opportunities</p>
                     </button>
-                    <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400">
-                      <h4 className="font-medium">Create Course</h4>
-                      <p className="text-sm text-gray-500">Offer learning opportunities</p>
+                    <button
+                      onClick={() => router.push("/events/create")}
+                      className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400"
+                    >
+                      <h4 className="font-medium">Create Event</h4>
+                      <p className="text-sm text-gray-500">Organize hackathons, courses & events</p>
                     </button>
                   </div>
                 </div>
@@ -221,6 +292,49 @@ export default function Dashboard() {
                     Your Posted Jobs
                   </h3>
                   <p className="text-gray-500">No jobs posted yet.</p>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Your Events
+                  </h3>
+                  {events.length > 0 ? (
+                    <div className="space-y-4">
+                      {events.map((event) => (
+                        <div key={event.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{event.title}</h4>
+                              {event.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {event.tags.map((tag: string, index: number) => (
+                                    <span
+                                      key={index}
+                                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <button
+                                onClick={() => router.push(`/events/${event.id}/manage`)}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+                              >
+                                Manage Event
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No events created yet.</p>
+                  )}
                 </div>
               </div>
             </div>

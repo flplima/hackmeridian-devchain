@@ -21,7 +21,9 @@ export default function SignIn() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        localStorage.setItem("test-session", JSON.stringify(data.user))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("test-session", JSON.stringify(data.user))
+        }
         router.push("/dashboard")
       }
     } catch (error) {
@@ -42,7 +44,9 @@ export default function SignIn() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        localStorage.setItem("test-session", JSON.stringify(data.user))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("test-session", JSON.stringify(data.user))
+        }
         router.push("/dashboard")
       }
     } catch (error) {
