@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 
 interface Event {
   id: string
@@ -37,6 +37,8 @@ export default function Dashboard() {
   } | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [availableEvents, setAvailableEvents] = useState<Event[]>([])
+  const [stellarAddress, setStellarAddress] = useState<string | null>(null)
+  const [stellarAddressLoading, setStellarAddressLoading] = useState(false)
 
   useEffect(() => {
     let testSessionData = null
@@ -111,6 +113,34 @@ export default function Dashboard() {
   //   setLoading(false)
   // }
 
+  const fetchStellarAddress = useCallback(async () => {
+    // Get user identifier - use email from testSession or user.email from session
+    const userEmail = testSession?.email || session?.user?.email
+    if (!userEmail) return
+
+    setStellarAddressLoading(true)
+    try {
+      const response = await fetch(`/api/user/address?userId=${encodeURIComponent(userEmail)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setStellarAddress(data.stellarAddress)
+      } else {
+        console.error("Failed to fetch Stellar address")
+      }
+    } catch (error) {
+      console.error("Error fetching Stellar address:", error)
+    }
+    setStellarAddressLoading(false)
+  }, [testSession, session])
+
+  // Load Stellar address when session is available
+  useEffect(() => {
+    const userEmail = testSession?.email || session?.user?.email
+    if (userEmail && !stellarAddress && !stellarAddressLoading) {
+      fetchStellarAddress()
+    }
+  }, [testSession, session, stellarAddress, stellarAddressLoading, fetchStellarAddress])
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -178,6 +208,41 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+
+                  {/* Stellar Address Section */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Stellar Address</h4>
+                    {stellarAddressLoading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span className="text-sm text-gray-500">Loading Stellar address...</span>
+                      </div>
+                    ) : stellarAddress ? (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-700 mb-1">Your Public Address</p>
+                            <code className="text-xs bg-white px-2 py-1 rounded border font-mono break-all">
+                              {stellarAddress}
+                            </code>
+                          </div>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(stellarAddress)}
+                            className="ml-3 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          🏆 This address will receive your achievement badges on the Stellar blockchain
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">
+                        Failed to load Stellar address. Please refresh the page.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

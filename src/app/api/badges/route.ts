@@ -5,14 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
-    const recipientEmail = searchParams.get('recipientEmail')
+    const recipientAddress = searchParams.get('recipientAddress')
 
     let badges: Badge[]
 
     if (eventId) {
       badges = serverDataStore.getBadgesByEvent(eventId)
-    } else if (recipientEmail) {
-      badges = serverDataStore.getBadgesByRecipient(recipientEmail)
+    } else if (recipientAddress) {
+      badges = serverDataStore.getBadgesByRecipient(recipientAddress)
     } else {
       badges = serverDataStore.getBadges()
     }
@@ -30,11 +30,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { recipientName, recipientEmail, eventId } = body
+    const { recipientAddress, eventId, issuerSecretKey } = body
 
-    if (!recipientName || !recipientEmail || !eventId) {
+    if (!recipientAddress || !eventId) {
       return NextResponse.json(
-        { error: "recipientName, recipientEmail, and eventId are required" },
+        { error: "recipientAddress and eventId are required" },
         { status: 400 }
       )
     }
@@ -48,12 +48,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // This route is deprecated - use /api/events/[id]/emit-badge instead
+    // For backwards compatibility, create a basic badge record
     const badge: Badge = {
       id: `badge_${Date.now()}`,
-      recipientName,
-      recipientEmail,
-      issuedAt: new Date().toISOString(),
       eventId,
+      eventTitle: event.title,
+      recipientAddress,
+      issuerAddress: "DEPRECATED",
+      transactionHash: "DEPRECATED",
+      dateIssued: new Date().toISOString(),
+      contractAddress: "DEPRECATED",
     }
 
     serverDataStore.addBadge(badge)

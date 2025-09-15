@@ -39,6 +39,7 @@ export default function ManageEvent() {
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [developerAddress, setDeveloperAddress] = useState("")
+  const [organizationName, setOrganizationName] = useState("")
   const [emittingBadge, setEmittingBadge] = useState(false)
   const [badges, setBadges] = useState<Badge[]>([])
 
@@ -84,8 +85,8 @@ export default function ManageEvent() {
   }
 
   const emitBadge = async () => {
-    if (!developerAddress || !event) {
-      alert("Please enter developer's Stellar address")
+    if (!developerAddress || !organizationName || !event) {
+      alert("Please enter developer's Stellar address and organization name")
       return
     }
 
@@ -99,14 +100,16 @@ export default function ManageEvent() {
         },
         body: JSON.stringify({
           developerAddress: developerAddress,
-          // In production, this would come from authenticated session
-          issuerSecretKey: "SCDQHQ7YI5PTFVNVJN5QWXQOBVJ4B2PVVFFYZBDGYGZ3KUJJCKXDH5BH"
+          organizationName: organizationName,
+          // masterToken would come from authenticated session in production
+          masterToken: process.env.NEXT_PUBLIC_MASTER_TOKEN || "demo-token"
         }),
       })
 
       if (response.ok) {
         const result = await response.json()
         setDeveloperAddress("")
+        setOrganizationName("")
         loadBadges() // Reload badges to show the new one
         alert(`🎉 Badge minted successfully on blockchain!\n\nTransaction: ${result.transactionHash}\nContract: ${result.badge.contractAddress}`)
       } else {
@@ -184,7 +187,7 @@ export default function ManageEvent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label htmlFor="developerAddress" className="block text-sm font-medium text-gray-700">
-                  Developer's Stellar Address
+                  Developer&apos;s Stellar Address
                 </label>
                 <input
                   type="text"
@@ -198,10 +201,26 @@ export default function ManageEvent() {
                   🔗 This will mint a certificate directly to the blockchain
                 </p>
               </div>
+              <div>
+                <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700">
+                  Organization Name
+                </label>
+                <input
+                  type="text"
+                  id="organizationName"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  placeholder="Stellar Development Foundation"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  🏢 Used to derive the organization&apos;s signing address
+                </p>
+              </div>
             </div>
             <button
               onClick={emitBadge}
-              disabled={emittingBadge || !developerAddress}
+              disabled={emittingBadge || !developerAddress || !organizationName}
               className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
             >
               {emittingBadge ? "Emitting..." : "🏆 Emit Badge"}

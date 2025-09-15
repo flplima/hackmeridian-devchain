@@ -6,10 +6,13 @@ export interface Event {
 
 export interface Badge {
   id: string
-  recipientName: string
-  recipientEmail: string
-  issuedAt: string
   eventId: string
+  eventTitle: string
+  recipientAddress: string
+  issuerAddress: string
+  transactionHash: string
+  dateIssued: string
+  contractAddress: string
 }
 
 export interface Job {
@@ -25,10 +28,17 @@ export interface Job {
   status: string
 }
 
+export interface UserAddress {
+  userId: string
+  stellarAddress: string
+  createdAt: string
+}
+
 class ServerDataStore {
   private events: Event[] = []
   private badges: Badge[] = []
   private jobs: Job[] = []
+  private userAddresses: UserAddress[] = []
   private initialized = false
 
   // Events
@@ -67,9 +77,9 @@ class ServerDataStore {
     return this.badges
   }
 
-  getBadgesByRecipient(recipientEmail: string): Badge[] {
+  getBadgesByRecipient(recipientAddress: string): Badge[] {
     this.ensureInitialized()
-    return this.badges.filter(badge => badge.recipientEmail === recipientEmail)
+    return this.badges.filter(badge => badge.recipientAddress === recipientAddress)
   }
 
   getBadgesByEvent(eventId: string): Badge[] {
@@ -98,11 +108,36 @@ class ServerDataStore {
     return this.jobs.filter(job => job.employerName === employerName)
   }
 
+  // User Addresses
+  addUserAddress(userAddress: UserAddress): void {
+    this.ensureInitialized()
+    // Remove existing mapping for this user
+    this.userAddresses = this.userAddresses.filter(ua => ua.userId !== userAddress.userId)
+    // Add new mapping
+    this.userAddresses.push(userAddress)
+  }
+
+  getUserAddress(userId: string): UserAddress | undefined {
+    this.ensureInitialized()
+    return this.userAddresses.find(ua => ua.userId === userId)
+  }
+
+  getUserByAddress(stellarAddress: string): UserAddress | undefined {
+    this.ensureInitialized()
+    return this.userAddresses.find(ua => ua.stellarAddress === stellarAddress)
+  }
+
+  getAllUserAddresses(): UserAddress[] {
+    this.ensureInitialized()
+    return this.userAddresses
+  }
+
   // Utility methods
   reset(): void {
     this.events = []
     this.badges = []
     this.jobs = []
+    this.userAddresses = []
     this.initialized = false
   }
 

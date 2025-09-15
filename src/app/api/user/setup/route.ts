@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { StellarService } from "@/lib/stellar"
+import { Keypair } from "@stellar/stellar-sdk"
 
 export async function POST() {
   try {
@@ -10,7 +10,7 @@ export async function POST() {
     //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     // }
 
-    const keypair = await StellarService.createAccount()
+    const keypair = Keypair.random()
 
     return NextResponse.json({
       publicKey: keypair.publicKey(),

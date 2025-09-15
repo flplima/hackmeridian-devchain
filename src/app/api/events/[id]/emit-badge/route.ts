@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CertificateService } from "@/lib/stellar"
 import { serverDataStore } from "@/lib/server-data-store"
+import { UserAddressService } from "@/lib/user-address-service"
 import { Keypair } from "@stellar/stellar-sdk"
 
 export async function POST(
@@ -10,11 +11,18 @@ export async function POST(
   try {
     const { id } = await params
     const body = await request.json()
-    const { developerAddress, issuerSecretKey } = body
+    const { developerAddress, organizationName, masterToken } = body
 
     if (!developerAddress) {
       return NextResponse.json(
         { error: "Developer address is required" },
+        { status: 400 }
+      )
+    }
+
+    if (!organizationName) {
+      return NextResponse.json(
+        { error: "Organization name is required" },
         { status: 400 }
       )
     }
@@ -28,11 +36,19 @@ export async function POST(
       )
     }
 
-    // For demo, use a test issuer or provided secret key
-    // In production, this would be retrieved from secure storage based on authenticated org
-    const issuerKeypair = issuerSecretKey
-      ? Keypair.fromSecret(issuerSecretKey)
-      : Keypair.fromSecret("SCDQHQ7YI5PTFVNVJN5QWXQOBVJ4B2PVVFFYZBDGYGZ3KUJJCKXDH5BH") // Demo key
+    // Derive organization keypair from organization name and master token
+    let issuerKeypair: Keypair
+    try {
+      issuerKeypair = UserAddressService.deriveOrganizationKeypair(organizationName, masterToken)
+      console.log(`Using derived keypair for organization: ${organizationName}`)
+      console.log(`Organization address: ${issuerKeypair.publicKey()}`)
+    } catch (error) {
+      console.error("Error deriving organization keypair:", error)
+      return NextResponse.json(
+        { error: "Invalid organization credentials" },
+        { status: 401 }
+      )
+    }
 
     // Mint the certificate using the smart contract
     const transactionHash = await CertificateService.mintCertificate(
