@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevChain - Verifiable Developer Portfolio
 
-## Getting Started
+A platform that enables developers to build a **verifiable on-chain portfolio** by receiving **non-transferable tokens (certificates)** from organizations and participating in freelance jobs paid via **escrow contracts** on Stellar/Soroban.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Authentication
+- **Developers**: Login with GitHub OAuth
+- **Organizations**: Login with LinkedIn OAuth
+
+### For Developers
+- View GitHub profile integration
+- Receive certificate tokens for completed courses/jobs
+- Accept freelance jobs with escrow payments
+- Build verifiable on-chain portfolio
+
+### For Organizations
+- Create and manage job postings
+- Issue certificate tokens to developers
+- Manage escrow payments for freelance work
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Authentication**: NextAuth.js with GitHub/LinkedIn OAuth
+- **Blockchain**: Stellar/Soroban for certificates and escrow contracts
+- **Network**: Stellar Testnet (can be configured for mainnet)
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
+
+3. Set up environment variables in `.env.local`:
+   ```
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-secret-here
+
+   GITHUB_CLIENT_ID=your-github-client-id
+   GITHUB_CLIENT_SECRET=your-github-client-secret
+
+   LINKEDIN_CLIENT_ID=your-linkedin-client-id
+   LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
+
+   STELLAR_NETWORK=testnet
+   ```
+
+4. Run the development server:
+   ```bash
+   yarn dev
+   ```
+
+## OAuth Setup
+
+### GitHub OAuth App
+1. Go to GitHub Settings > Developer settings > OAuth Apps
+2. Create a new OAuth App with:
+   - Homepage URL: `http://localhost:3000`
+   - Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+
+### LinkedIn OAuth App
+1. Go to LinkedIn Developers > Create App
+2. Set up OAuth 2.0 settings with:
+   - Redirect URL: `http://localhost:3000/api/auth/callback/linkedin`
+
+## Stellar Integration
+
+The platform uses Stellar testnet for:
+- **Certificate Tokens**: Non-transferable (soulbound) tokens representing course/job completions
+- **Escrow Contracts**: Smart contracts that hold job payments until completion
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/           # API routes
+│   ├── auth/          # Authentication pages
+│   ├── dashboard/     # Main dashboard
+│   ├── jobs/          # Job management
+│   └── components/    # Shared components
+├── lib/
+│   └── stellar.ts     # Stellar/Soroban integration
+└── types/
+    └── next-auth.d.ts # NextAuth type extensions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Use `yarn` for package management (configured in CLAUDE.md)
+- The project uses TypeScript for type safety
+- Tailwind CSS for styling
+- ESLint for code quality
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
