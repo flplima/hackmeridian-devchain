@@ -18,8 +18,27 @@ export default function Dashboard() {
   const router = useRouter()
   const [githubProfile, setGithubProfile] = useState<GitHubProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [testSession, setTestSession] = useState<any>(null)
 
   useEffect(() => {
+    const testSessionData = localStorage.getItem("test-session")
+    if (testSessionData) {
+      const parsedTestSession = JSON.parse(testSessionData)
+      setTestSession(parsedTestSession)
+      if (parsedTestSession.provider === "github") {
+        setGithubProfile({
+          name: parsedTestSession.name,
+          login: "flplima",
+          avatar_url: parsedTestSession.image,
+          public_repos: 42,
+          followers: 123,
+          following: 56,
+        })
+      }
+      setLoading(false)
+      return
+    }
+
     if (status === "loading") return
 
     if (!session) {
@@ -57,12 +76,13 @@ export default function Dashboard() {
     )
   }
 
-  if (!session) {
+  const currentSession = testSession || session
+  if (!currentSession) {
     return null
   }
 
-  const isDeveloper = session.provider === "github"
-  const isOrganization = session.provider === "linkedin"
+  const isDeveloper = currentSession.provider === "github"
+  const isOrganization = currentSession.provider === "linkedin"
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,7 +93,10 @@ export default function Dashboard() {
               DevChain Dashboard
             </h1>
             <button
-              onClick={() => signOut()}
+              onClick={() => {
+                localStorage.removeItem("test-session")
+                signOut()
+              }}
               className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
             >
               Sign Out
@@ -141,12 +164,12 @@ export default function Dashboard() {
                   </h3>
                   <div className="flex items-center space-x-4">
                     <img
-                      src={session.user?.image || "/default-org.png"}
+                      src={currentSession.user?.image || currentSession.image || "/default-org.png"}
                       alt="Organization Logo"
                       className="h-16 w-16 rounded-full"
                     />
                     <div>
-                      <h4 className="text-xl font-semibold">{session.user?.name}</h4>
+                      <h4 className="text-xl font-semibold">{currentSession.user?.name || currentSession.name}</h4>
                       <p className="text-gray-600">Organization</p>
                     </div>
                   </div>
