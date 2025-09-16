@@ -10,11 +10,11 @@ export async function GET(request: NextRequest) {
     let badges: Badge[]
 
     if (eventId) {
-      badges = serverDataStore.getBadgesByEvent(eventId)
+      badges = await serverDataStore.getBadgesByEvent(eventId)
     } else if (recipientAddress) {
-      badges = serverDataStore.getBadgesByRecipient(recipientAddress)
+      badges = await serverDataStore.getBadgesByRecipient(recipientAddress)
     } else {
-      badges = serverDataStore.getBadges()
+      badges = await serverDataStore.getBadges()
     }
 
     return NextResponse.json({ badges })
@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { recipientAddress, eventId, issuerSecretKey } = body
+    const { recipientAddress, eventId } = body
+    // const { issuerSecretKey } = body // TODO: Implement badge signing with issuer key
 
     if (!recipientAddress || !eventId) {
       return NextResponse.json(
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify event exists
-    const event = serverDataStore.getEventById(eventId)
+    const event = await serverDataStore.getEventById(eventId)
     if (!event) {
       return NextResponse.json(
         { error: "Event not found" },

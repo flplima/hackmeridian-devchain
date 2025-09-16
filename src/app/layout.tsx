@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "./components/session-provider";
+import { QueryProvider } from "./components/query-provider";
 
 export const metadata: Metadata = {
   title: "DevChain - Verifiable Developer Portfolio",
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <QueryProvider>
+          <SessionProvider>
+            {children}
+          </SessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -15,20 +15,28 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Derive organization stellar address from organization ID
+    // Determine organization stellar address
     let organizationAddress: string
-    try {
-      organizationAddress = UserAddressService.getOrganizationAddress(
-        organizationId,
-        process.env.MASTER_TOKEN
-      )
-      console.log(`Derived organization address: ${organizationAddress} from ID: ${organizationId}`)
-    } catch (error) {
-      console.error("Error deriving organization address:", error)
-      return NextResponse.json(
-        { error: "Invalid organization credentials" },
-        { status: 401 }
-      )
+
+    // Check if organizationId is already a Stellar address (starts with G and is 56 chars)
+    if (organizationId.startsWith('G') && organizationId.length === 56) {
+      console.log(`Using organization ID as direct Stellar address: ${organizationId}`)
+      organizationAddress = organizationId
+    } else {
+      // Try to derive organization stellar address from organization ID
+      try {
+        organizationAddress = UserAddressService.getOrganizationAddress(
+          organizationId,
+          process.env.MASTER_TOKEN
+        )
+        console.log(`Derived organization address: ${organizationAddress} from ID: ${organizationId}`)
+      } catch (error) {
+        console.error("Error deriving organization address:", error)
+        return NextResponse.json(
+          { error: "Invalid organization credentials" },
+          { status: 401 }
+        )
+      }
     }
 
     console.log(`Fetching badges for organization: ${organizationId} -> ${organizationAddress}`)
@@ -44,16 +52,26 @@ export async function GET(request: NextRequest) {
       })
     } else {
       // Get all badges for the organization and count by event
+      // First get events to help match full event IDs
+      const eventsResponse = await fetch(`${request.nextUrl.origin}/api/events`)
+      const eventsData = eventsResponse.ok ? await eventsResponse.json() : null
+      const allEvents = eventsData?.events || []
+
       const [badges, badgeCounts] = await Promise.all([
         BlockchainService.getBadgesByOrganization(organizationAddress),
-        BlockchainService.getBadgeCountsByOrganization(organizationAddress)
+        BlockchainService.getBadgeCountsByOrganization(organizationAddress, allEvents)
       ])
 
       return NextResponse.json({
         badges,
         badgeCounts,
         organizationAddress,
-        totalCount: badges.length
+        totalCount: badges.length,
+        debug: {
+          eventsFound: allEvents.length,
+          badgesFound: badges.length,
+          badgeCounts
+        }
       })
     }
   } catch (error) {

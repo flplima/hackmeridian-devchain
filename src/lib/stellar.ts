@@ -1,14 +1,6 @@
 import {
-  Horizon,
   Keypair,
-  Networks,
 } from "@stellar/stellar-sdk"
-
-const server = new Horizon.Server("https://horizon-testnet.stellar.org")
-
-// Smart contract configuration
-const CONTRACT_ID = process.env.CERTIFICATE_CONTRACT_ID || "CBZM3AM3TGQ4OWJY2NCDNVTCNXGS7ZVLPUNXQRSRAEQBTDWPKJKCO2NI"
-const NETWORK_PASSPHRASE = Networks.TESTNET
 
 export interface Certificate {
   issuer: string
@@ -29,7 +21,7 @@ export class CertificateService {
       // In production, this would interact with the actual smart contract
       const mockTransactionHash = `cert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-      console.log(`Mock: Minting certificate for ${developerAddress} on event ${eventId}`)
+      console.log(`Mock: Minting certificate for ${developerAddress} on event ${eventId} (${eventName})`)
       console.log(`Mock transaction hash: ${mockTransactionHash}`)
 
       // Simulate network delay

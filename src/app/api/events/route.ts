@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { v4: uuidv4 } = require('uuid')
+    const { v4: uuidv4 } = await import('uuid')
     const event: Event = {
       id: uuidv4(),
       title,

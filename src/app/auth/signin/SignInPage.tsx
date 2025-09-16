@@ -1,10 +1,8 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 
-export default function SignIn() {
+export default function SignInPage() {
   const { user, login, loading: authLoading } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -13,7 +11,6 @@ export default function SignIn() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-
     // Check for GitHub auth user in cookies
     const authUserCookie = document.cookie
       .split('; ')
@@ -81,28 +78,6 @@ export default function SignIn() {
     window.location.href = githubAuthUrl
   }
 
-  const handleDevLogin = async () => {
-    try {
-      // Create a user object for flplima
-      const devUser = {
-        id: "20775579", // GitHub ID for flplima
-        name: "Felipe Lima",
-        email: "flplima@github.local",
-        userType: "developer" as const,
-        provider: "github" as const,
-        githubHandle: "flplima",
-        githubId: 20775579,
-        description: "Developer account for testing"
-      }
-
-      login(devUser)
-      router.push("/dashboard")
-    } catch (error) {
-      console.error("Dev login error:", error)
-      setError("Dev login failed")
-    }
-  }
-
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -112,18 +87,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
-      {/* Dev login button - only show in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={handleDevLogin}
-          className="absolute top-4 right-4 text-xs bg-gray-800 text-white px-2 py-1 rounded opacity-50 hover:opacity-100"
-          title="Dev login as flplima"
-        >
-          DEV
-        </button>
-      )}
-
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">

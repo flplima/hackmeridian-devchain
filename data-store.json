@@ -1,0 +1,195 @@
+{
+  "events": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Stellar Blockchain Hackathon 2024",
+      "tags": [
+        "stellar",
+        "blockchain",
+        "defi",
+        "web3"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "title": "React Workshop",
+      "tags": [
+        "react",
+        "javascript",
+        "frontend"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "title": "AI/ML Bootcamp",
+      "tags": [
+        "ai",
+        "machine-learning",
+        "python"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Stellar Blockchain Hackathon 2024",
+      "tags": [
+        "stellar",
+        "blockchain",
+        "defi",
+        "web3"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "title": "React Workshop",
+      "tags": [
+        "react",
+        "javascript",
+        "frontend"
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "title": "AI/ML Bootcamp",
+      "tags": [
+        "ai",
+        "machine-learning",
+        "python"
+      ]
+    }
+  ],
+  "badges": [],
+  "jobs": [
+    {
+      "id": "job_1758016156331_k56cpik81",
+      "title": "test",
+      "description": "test",
+      "amount": "3099.276579748836",
+      "usdAmount": "1212",
+      "tags": [
+        "a"
+      ],
+      "requirements": [
+        "2"
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T09:49:16.331Z",
+      "status": "open",
+      "escrowId": "9003fedc-4a24-423a-b8f5-5b4ada4da98f",
+      "stellarAmount": "30992765797"
+    },
+    {
+      "id": "job_1758016362406_4x0a7ve25",
+      "title": "tes",
+      "description": "asdf",
+      "amount": "109.0909090909091",
+      "usdAmount": "12",
+      "tags": [
+        "a"
+      ],
+      "requirements": [
+        ""
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T09:52:42.407Z",
+      "status": "open",
+      "escrowId": "7ca36746-2556-48c7-ac77-d6c051fd76ce",
+      "stellarAmount": "1090909091"
+    },
+    {
+      "id": "job_1758018188498_g8md1ly82",
+      "title": "FInal Title",
+      "description": "test",
+      "amount": "285.0663742382179",
+      "usdAmount": "111",
+      "tags": [
+        "test"
+      ],
+      "requirements": [
+        ""
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T10:23:08.499Z",
+      "status": "open",
+      "escrowId": "e31aa1a0-08a6-4021-8c32-329f58c0e214",
+      "stellarAmount": "2850663742"
+    }
+  ],
+  "userAddresses": [
+    {
+      "userId": "550e8400-e29b-41d4-a716-446655442000",
+      "stellarAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
+      "createdAt": "2025-09-16T09:49:16.410Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "20775579",
+      "name": "Felipe Lima",
+      "email": "flplima@github.local",
+      "githubHandle": "flplima",
+      "githubId": 20775579
+    },
+    {
+      "id": "20775579",
+      "name": "Felipe Lima",
+      "email": "flplima@github.local",
+      "githubHandle": "flplima",
+      "githubId": 20775579
+    }
+  ],
+  "organizations": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655442000",
+      "name": "Stellar Development Foundation",
+      "description": "Building the open financial system",
+      "createdAt": "2025-09-16T09:49:16.379Z"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655442000",
+      "name": "Stellar Development Foundation",
+      "description": "Building the open financial system",
+      "createdAt": "2025-09-16T10:23:08.821Z"
+    }
+  ],
+  "escrows": [
+    {
+      "id": "9003fedc-4a24-423a-b8f5-5b4ada4da98f",
+      "jobId": "job_1758016156331_k56cpik81",
+      "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
+      "tokenAddress": "XLM",
+      "amount": "30992765797",
+      "state": "funded",
+      "createdAt": "2025-09-16T09:49:16.948Z",
+      "deadline": "2025-10-16T09:49:16.948Z",
+      "transactionHash": "mock_funding_1758016156948_abc123def"
+    },
+    {
+      "id": "7ca36746-2556-48c7-ac77-d6c051fd76ce",
+      "jobId": "job_1758016362406_4x0a7ve25",
+      "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
+      "tokenAddress": "XLM",
+      "amount": "1090909091",
+      "state": "funded",
+      "createdAt": "2025-09-16T09:52:42.927Z",
+      "deadline": "2025-10-16T09:52:42.927Z",
+      "transactionHash": "mock_funding_1758016362927_def456ghi"
+    },
+    {
+      "id": "e31aa1a0-08a6-4021-8c32-329f58c0e214",
+      "jobId": "job_1758018188498_g8md1ly82",
+      "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
+      "tokenAddress": "XLM",
+      "amount": "2850663742",
+      "state": "funded",
+      "createdAt": "2025-09-16T10:23:09.398Z",
+      "deadline": "2025-10-16T10:23:09.398Z",
+      "transactionHash": "mock_funding_1758018189398_6q8079y7e"
+    }
+  ]
+}

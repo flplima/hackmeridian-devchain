@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const state = searchParams.get('state')
+  // const _state = searchParams.get('state') // TODO: Implement state validation
 
   if (!code) {
     return NextResponse.redirect(new URL('/auth/signin?error=missing_code', request.url))

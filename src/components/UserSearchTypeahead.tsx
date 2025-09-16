@@ -86,6 +86,8 @@ export default function UserSearchTypeahead({
         <img
           src={user.profileImage}
           alt={user.name}
+          width={32}
+          height={32}
           className="h-8 w-8 rounded-full flex-shrink-0"
         />
       ) : (

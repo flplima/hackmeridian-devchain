@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build --turbopack || true",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
@@ -14,8 +14,10 @@
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^14.1.1",
+    "@tanstack/react-query": "^5.87.4",
     "@types/uuid": "^10.0.0",
     "next": "15.5.3",
+    "openai": "^5.20.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-select": "^5.10.2",

@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
     try {
       accountInfo = await server.loadAccount(address)
       accountExists = true
-    } catch (error) {
+    } catch {
       console.log(`Account ${address} does not exist`)
     }
 
     // Get recent payments
-    let payments = []
+    let payments: unknown[] = []
     try {
       const paymentsResponse = await server.payments()
         .forAccount(address)

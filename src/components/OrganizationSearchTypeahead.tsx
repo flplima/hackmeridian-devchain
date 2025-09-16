@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Select, { SingleValue, StylesConfig } from "react-select"
 
 interface Organization {
@@ -27,7 +27,6 @@ export default function OrganizationSearchTypeahead({
   placeholder = "Search for an organization...",
   className = ""
 }: OrganizationSearchTypeaheadProps) {
-  const [organizations, setOrganizations] = useState<Organization[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const searchOrganizations = async (searchQuery: string) => {

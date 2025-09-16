@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user object with UUID
-    const { v4: uuidv4 } = require('uuid')
+    const { v4: uuidv4 } = await import('uuid')
     const user = {
       id: uuidv4(),
       name,

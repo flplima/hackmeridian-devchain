@@ -13,8 +13,40 @@ export default function CreateJob() {
     amount: "",
     tags: "",
     requirements: "",
+    createEscrow: true,
+    deadline: "",
   })
   const [loading, setLoading] = useState(false)
+  const [xlmPrice, setXlmPrice] = useState<number>(0)
+  const [xlmAmount, setXlmAmount] = useState<number>(0)
+
+  // Fetch XLM price on component mount
+  useEffect(() => {
+    const fetchXLMPrice = async () => {
+      try {
+        const response = await fetch('/api/stellar/price')
+        if (response.ok) {
+          const data = await response.json()
+          setXlmPrice(data.xlm_usd)
+        }
+      } catch (error) {
+        console.error('Error fetching XLM price:', error)
+      }
+    }
+
+    fetchXLMPrice()
+  }, [])
+
+  // Convert USD to XLM when amount changes
+  useEffect(() => {
+    if (formData.amount && xlmPrice > 0) {
+      const usdAmount = parseFloat(formData.amount)
+      const xlmEquivalent = usdAmount / xlmPrice
+      setXlmAmount(xlmEquivalent)
+    } else {
+      setXlmAmount(0)
+    }
+  }, [formData.amount, xlmPrice])
 
   useEffect(() => {
     if (authLoading) return
@@ -36,22 +68,34 @@ export default function CreateJob() {
     setLoading(true)
 
     try {
+      const requestData = {
+        ...formData,
+        amount: xlmAmount.toString(), // Send XLM amount to API
+        usdAmount: formData.amount, // Also send original USD amount for reference
+        tags: formData.tags.split(",").map((tag) => tag.trim()),
+        requirements: formData.requirements.split(",").map((req) => req.trim()),
+        employerId: user?.id, // Add employer ID for escrow creation
+      }
+
+      console.log("Sending job creation request:", requestData)
+
       const response = await fetch("/api/jobs/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          tags: formData.tags.split(",").map((tag) => tag.trim()),
-          requirements: formData.requirements.split(",").map((req) => req.trim()),
-        }),
+        body: JSON.stringify(requestData),
       })
 
       if (response.ok) {
         router.push("/dashboard")
       } else {
-        console.error("Failed to create job")
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Job creation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
       }
     } catch (error) {
       console.error("Error creating job:", error)
@@ -121,17 +165,45 @@ export default function CreateJob() {
 
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                Payment Amount (XLM)
+                Payment Amount (USD)
               </label>
-              <input
-                type="number"
-                id="amount"
-                required
-                step="0.01"
-                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">$</span>
+                </div>
+                <input
+                  type="number"
+                  id="amount"
+                  required
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  className="mt-1 block w-full pl-7 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                />
+              </div>
+              {xlmAmount > 0 && xlmPrice > 0 && (
+                <p className="mt-2 text-sm text-gray-600">
+                  ≈ {new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 7
+                  }).format(xlmAmount)} XLM
+                  <span className="text-xs text-gray-400 ml-1">
+                    @ {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                      minimumFractionDigits: 4,
+                      maximumFractionDigits: 4
+                    }).format(xlmPrice)}/XLM
+                  </span>
+                </p>
+              )}
+              {xlmPrice === 0 && (
+                <p className="mt-2 text-xs text-gray-400">
+                  Loading XLM price...
+                </p>
+              )}
             </div>
 
             <div>
@@ -160,6 +232,47 @@ export default function CreateJob() {
                 value={formData.requirements}
                 onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
               />
+            </div>
+
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Escrow Settings</h3>
+
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="createEscrow"
+                  checked={formData.createEscrow}
+                  onChange={(e) => setFormData({ ...formData, createEscrow: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                />
+                <label htmlFor="createEscrow" className="ml-2 block text-sm text-gray-700">
+                  Create escrow for secure payment
+                </label>
+              </div>
+
+              {formData.createEscrow && (
+                <div className="space-y-4 ml-6 p-4 bg-blue-50 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    ✅ Direct escrow protection. Funds are held securely and released when you approve completed work.
+                  </p>
+
+                  <div>
+                    <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
+                      Project Deadline (optional)
+                    </label>
+                    <input
+                      type="date"
+                      id="deadline"
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Leave empty for 30-day default deadline
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end">

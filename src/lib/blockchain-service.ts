@@ -1,11 +1,8 @@
 import {
-  Horizon,
-  Networks,
-  Keypair
+  Horizon
 } from "@stellar/stellar-sdk"
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org")
-const NETWORK_PASSPHRASE = Networks.TESTNET
 
 // Smart contract configuration
 const CONTRACT_ID = process.env.CERTIFICATE_CONTRACT_ID || "CBZM3AM3TGQ4OWJY2NCDNVTCNXGS7ZVLPUNXQRSRAEQBTDWPKJKCO2NI"
@@ -66,7 +63,7 @@ export class BlockchainService {
             console.log(`🎯 Is certificate: ${isCertificate}`)
 
             if (isCertificate) {
-              let eventData = {
+              const eventData: Record<string, string> = {
                 event_id: 'unknown',
                 event_name: 'Certificate',
                 type: 'CERTIFICATE'
@@ -84,7 +81,7 @@ export class BlockchainService {
                     }
                   } else if (transaction.memo.includes('{')) {
                     // Legacy JSON format, try to parse but handle truncated memos
-                    let memoToParse = transaction.memo
+                    const memoToParse = transaction.memo
                     if (!transaction.memo.endsWith('}')) {
                       // If memo appears truncated, try to extract what we can
                       console.log('📝 Memo appears truncated, extracting available data')
@@ -152,16 +149,36 @@ export class BlockchainService {
 
   /**
    * Get badge counts by event for an organization
+   * Note: This method receives events from the API to properly match short event IDs from blockchain
    */
-  static async getBadgeCountsByOrganization(organizationAddress: string): Promise<Record<string, number>> {
+  static async getBadgeCountsByOrganization(organizationAddress: string, allEvents?: any[]): Promise<Record<string, number>> {
     try {
       const badges = await this.getBadgesByOrganization(organizationAddress)
       const counts: Record<string, number> = {}
 
       badges.forEach(badge => {
-        counts[badge.eventId] = (counts[badge.eventId] || 0) + 1
+        const shortEventId = badge.eventId // This is the 8-char version from blockchain
+
+        // If we have events data, try to find the full event ID that matches
+        if (allEvents) {
+          const matchingEvent = allEvents.find(event =>
+            event.id === shortEventId || event.id.startsWith(shortEventId)
+          )
+
+          if (matchingEvent) {
+            // Count using the full event ID
+            counts[matchingEvent.id] = (counts[matchingEvent.id] || 0) + 1
+          } else {
+            // Fallback to short ID if no match found
+            counts[shortEventId] = (counts[shortEventId] || 0) + 1
+          }
+        } else {
+          // Without events data, just use the short ID
+          counts[shortEventId] = (counts[shortEventId] || 0) + 1
+        }
       })
 
+      console.log(`📊 Badge counts:`, counts)
       return counts
     } catch (error) {
       console.error('❌ Error getting badge counts:', error)

@@ -7,7 +7,7 @@ Enable developers to build a **verifiable on-chain portfolio** by receiving **no
 Authentication is streamlined:
 
 - Developers login with **GitHub**.
-- Organizations login with **LinkedIn**.
+- Organizations login with **E-mail/password**.
 
 ---
 
@@ -26,7 +26,6 @@ Authentication is streamlined:
 
 ### Organization
 
-- Login: **LinkedIn OAuth only**.
 - Can create:
     - Courses
     - Hackathons

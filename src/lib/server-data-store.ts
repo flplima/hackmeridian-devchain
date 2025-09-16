@@ -22,10 +22,39 @@ export interface Job {
   amount: string
   tags: string[]
   requirements: string[]
+  employerId?: string // Organization user ID
   employerName: string
   employerImage: string
   createdAt: string
   status: string
+  escrowId?: string
+  freelancerId?: string
+  stellarAmount?: string // Amount in stroops for Stellar
+}
+
+export enum EscrowState {
+  PENDING = 'pending',
+  FUNDED = 'funded',
+  ACCEPTED = 'accepted',
+  COMPLETED = 'completed',
+  DISPUTED = 'disputed',
+  REFUNDED = 'refunded',
+  CANCELLED = 'cancelled'
+}
+
+export interface Escrow {
+  id: string
+  jobId: string
+  payerAddress: string // Organization's Stellar address
+  payeeAddress?: string // Freelancer's Stellar address (set when job accepted)
+  tokenAddress: string // XLM or USDC token address
+  amount: string // Amount in stroops
+  state: EscrowState
+  createdAt: string
+  deadline: string
+  escrowAccountId?: string // Stellar account holding the funds
+  transactionHash?: string // Hash of funding transaction
+  releaseTransactionHash?: string // Hash of release transaction
 }
 
 export interface UserAddress {
@@ -56,7 +85,9 @@ class ServerDataStore {
   private userAddresses: UserAddress[] = []
   private users: User[] = []
   private organizations: Organization[] = []
+  private escrows: Escrow[] = []
   private initialized = false
+  private dataFile = './data-store.json'
 
   // Events
   async addEvent(event: Event): Promise<void> {
@@ -109,6 +140,7 @@ class ServerDataStore {
   async addJob(job: Job): Promise<void> {
     await this.ensureInitialized()
     this.jobs.push(job)
+    await this.saveToFile()
   }
 
   async getJobs(): Promise<Job[]> {
@@ -124,6 +156,55 @@ class ServerDataStore {
   async getJobsByEmployer(employerName: string): Promise<Job[]> {
     await this.ensureInitialized()
     return this.jobs.filter(job => job.employerName === employerName)
+  }
+
+  async updateJob(job: Job): Promise<void> {
+    await this.ensureInitialized()
+    const index = this.jobs.findIndex(j => j.id === job.id)
+    if (index !== -1) {
+      this.jobs[index] = job
+      await this.saveToFile()
+    }
+  }
+
+  // Escrows
+  async addEscrow(escrow: Escrow): Promise<void> {
+    await this.ensureInitialized()
+    this.escrows.push(escrow)
+    await this.saveToFile()
+  }
+
+  async getEscrows(): Promise<Escrow[]> {
+    await this.ensureInitialized()
+    return this.escrows
+  }
+
+  async getEscrowById(id: string): Promise<Escrow | undefined> {
+    await this.ensureInitialized()
+    return this.escrows.find(escrow => escrow.id === id)
+  }
+
+  async getEscrowByJobId(jobId: string): Promise<Escrow | undefined> {
+    await this.ensureInitialized()
+    return this.escrows.find(escrow => escrow.jobId === jobId)
+  }
+
+  async updateEscrow(escrow: Escrow): Promise<void> {
+    await this.ensureInitialized()
+    const index = this.escrows.findIndex(e => e.id === escrow.id)
+    if (index !== -1) {
+      this.escrows[index] = escrow
+    }
+  }
+
+  async getEscrowsByPayer(payerAddress: string): Promise<Escrow[]> {
+    await this.ensureInitialized()
+    return this.escrows.filter(escrow => escrow.payerAddress === payerAddress)
+  }
+
+  async getEscrowsByPayee(payeeAddress: string): Promise<Escrow[]> {
+    await this.ensureInitialized()
+    return this.escrows.filter(escrow => escrow.payeeAddress === payeeAddress)
   }
 
   // User Addresses
@@ -238,6 +319,7 @@ class ServerDataStore {
     this.userAddresses = []
     this.users = []
     this.organizations = []
+    this.escrows = []
     this.initialized = false
   }
 
@@ -307,7 +389,53 @@ class ServerDataStore {
 
   private async ensureInitialized(): Promise<void> {
     if (!this.initialized) {
+      await this.loadFromFile()
       await this.initializeSampleData()
+    }
+  }
+
+  private async loadFromFile(): Promise<void> {
+    try {
+      const fs = await import('fs')
+      console.log(`Attempting to load data from ${this.dataFile}`)
+      console.log(`File exists: ${fs.existsSync(this.dataFile)}`)
+
+      if (fs.existsSync(this.dataFile)) {
+        const fileContent = fs.readFileSync(this.dataFile, 'utf8')
+        console.log(`File content length: ${fileContent.length}`)
+
+        const data = JSON.parse(fileContent)
+        this.events = data.events || []
+        this.badges = data.badges || []
+        this.jobs = data.jobs || []
+        this.userAddresses = data.userAddresses || []
+        this.users = data.users || []
+        this.organizations = data.organizations || []
+        this.escrows = data.escrows || []
+        console.log(`✅ Loaded data from ${this.dataFile}: ${this.jobs.length} jobs, ${this.escrows.length} escrows`)
+      } else {
+        console.log(`File ${this.dataFile} does not exist`)
+      }
+    } catch (error) {
+      console.error('❌ Could not load data from file:', error)
+    }
+  }
+
+  private async saveToFile(): Promise<void> {
+    try {
+      const fs = await import('fs')
+      const data = {
+        events: this.events,
+        badges: this.badges,
+        jobs: this.jobs,
+        userAddresses: this.userAddresses,
+        users: this.users,
+        organizations: this.organizations,
+        escrows: this.escrows
+      }
+      fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2))
+    } catch (error) {
+      console.warn('Could not save data to file:', error)
     }
   }
 }

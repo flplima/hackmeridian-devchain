@@ -11,7 +11,7 @@ export async function POST(
   try {
     const { id } = await params
     const body = await request.json()
-    const { developerAddress, organizationId, masterToken } = body
+    const { developerAddress, organizationId, masterToken, badgeTitle, badgeDescription, imageUrl } = body
 
     if (!developerAddress) {
       return NextResponse.json(
@@ -71,7 +71,12 @@ export async function POST(
       issuerKeypair,
       developerAddress,
       event.id,
-      event.title
+      event.title,
+      {
+        title: badgeTitle,
+        description: badgeDescription,
+        imageUrl: imageUrl
+      }
     )
 
     // Create badge object for response (not stored locally)

@@ -5,7 +5,6 @@ import {
   TransactionBuilder,
   Operation,
   Asset,
-  Account,
   Memo,
 } from "@stellar/stellar-sdk"
 
@@ -51,7 +50,7 @@ export class StellarTestnetService {
       await server.loadAccount(publicKey)
       console.log(`✅ Account ${publicKey} already exists`)
       return true
-    } catch (error) {
+    } catch {
       // Account doesn't exist, try to fund it
       console.log(`🔄 Account ${publicKey} doesn't exist, funding via Friendbot`)
       return await this.fundAccount(publicKey)
@@ -66,7 +65,8 @@ export class StellarTestnetService {
     issuerKeypair: Keypair,
     recipientAddress: string,
     eventId: string,
-    eventName: string
+    eventName: string,
+    metadata?: { title?: string; description?: string; imageUrl?: string }
   ): Promise<string> {
     try {
       console.log(`🚀 Emitting certificate for ${eventName} to ${recipientAddress}`)
@@ -90,8 +90,18 @@ export class StellarTestnetService {
       const shortEventId = eventId.substring(0, 8)
       const certificateData = `CERT:${shortEventId}`
 
-      // Build transaction with a small XLM payment and memo
-      const transaction = new TransactionBuilder(issuerAccount, {
+      // Prepare metadata for data entries
+      const metadataJSON = JSON.stringify({
+        eventId,
+        eventName,
+        title: metadata?.title || eventName,
+        description: metadata?.description || '',
+        imageUrl: metadata?.imageUrl || '',
+        timestamp: Date.now()
+      })
+
+      // Build transaction with a small XLM payment, memo, and metadata
+      const transactionBuilder = new TransactionBuilder(issuerAccount, {
         fee: "10000", // 0.001 XLM
         networkPassphrase: NETWORK_PASSPHRASE,
       })
@@ -101,8 +111,30 @@ export class StellarTestnetService {
         amount: "0.0000001", // Minimal XLM amount (1 stroop)
       }))
       .addMemo(Memo.text(certificateData)) // Use compact format that fits in 28 chars
-      .setTimeout(300)
-      .build()
+
+      // Add metadata as data entries (split if too long)
+      const maxDataLength = 64
+      if (metadataJSON.length <= maxDataLength) {
+        transactionBuilder.addOperation(Operation.manageData({
+          name: `cert_meta_${shortEventId}`,
+          value: metadataJSON
+        }))
+      } else {
+        // Split large metadata into chunks
+        const chunks = []
+        for (let i = 0; i < metadataJSON.length; i += maxDataLength) {
+          chunks.push(metadataJSON.substring(i, i + maxDataLength))
+        }
+
+        chunks.forEach((chunk, index) => {
+          transactionBuilder.addOperation(Operation.manageData({
+            name: `cert_meta_${shortEventId}_${index}`,
+            value: chunk
+          }))
+        })
+      }
+
+      const transaction = transactionBuilder.setTimeout(300).build()
 
       // Sign transaction
       transaction.sign(issuerKeypair)
@@ -127,7 +159,7 @@ export class StellarTestnetService {
     try {
       console.log(`🔍 Getting certificates for ${userAddress}`)
 
-      const account = await server.loadAccount(userAddress)
+      await server.loadAccount(userAddress)
       const payments = await server.payments()
         .forAccount(userAddress)
         .order('desc')
@@ -155,7 +187,7 @@ export class StellarTestnetService {
               }
               certificates.push(cert)
             }
-          } catch (error) {
+          } catch {
             // Skip invalid memos
             continue
           }
