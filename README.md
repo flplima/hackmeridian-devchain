@@ -1,4 +1,4 @@
-# DevChain - Verifiable Developer Portfolio
+# ProofChain - Verifiable Developer Portfolio
 
 A platform that enables developers to build a **verifiable on-chain portfolio** by receiving **non-transferable tokens (certificates)** from organizations and participating in freelance jobs paid via **escrow contracts** on Stellar/Soroban.
 

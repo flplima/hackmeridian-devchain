@@ -4,7 +4,7 @@ import { SessionProvider } from "./components/session-provider";
 import { QueryProvider } from "./components/query-provider";
 
 export const metadata: Metadata = {
-  title: "DevChain - Verifiable Developer Portfolio",
+  title: "ProofChain - Verifiable Developer Portfolio",
   description: "Build your verifiable on-chain developer portfolio with certificates and job history",
 };
 

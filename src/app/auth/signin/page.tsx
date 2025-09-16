@@ -127,7 +127,7 @@ export default function SignIn() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to DevChain
+            Welcome to ProofChain
           </h2>
           <p className="text-gray-600 mb-8">
             Build your verifiable on-chain developer portfolio
