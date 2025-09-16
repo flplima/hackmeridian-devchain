@@ -123,7 +123,7 @@ export default function Dashboard() {
   const { data: developerBadges, isLoading: badgesLoading } = useQuery({
     queryKey: ['developer-badges', stellarAddress],
     queryFn: async () => {
-      if (!stellarAddress || stellarAddress === "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER") {
+      if (!stellarAddress || stellarAddress === "GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76") {
         throw new Error('Valid Stellar address required')
       }
       console.log('🔍 Fetching badges for developer address:', stellarAddress)
@@ -135,7 +135,7 @@ export default function Dashboard() {
       console.log('🏆 Developer badges received:', data)
       return data
     },
-    enabled: !!stellarAddress && isDeveloper && stellarAddress !== "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER",
+    enabled: !!stellarAddress && isDeveloper && stellarAddress !== "GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76",
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 30 * 1000, // Refetch every 30 seconds
   })
@@ -152,11 +152,11 @@ export default function Dashboard() {
             console.log('✅ Developer Stellar address loaded:', data.stellarAddress)
           } else {
             console.log('No Stellar address found for developer, using demo address')
-            setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
+            setStellarAddress("GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76")
           }
         } catch (error) {
           console.error('Error fetching developer Stellar address:', error)
-          setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
+          setStellarAddress("GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76")
         }
       }
 
@@ -258,7 +258,7 @@ export default function Dashboard() {
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
                     Your Certificates & Badges
                   </h3>
-                  {stellarAddress && stellarAddress !== "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER" && (
+                  {stellarAddress && stellarAddress !== "GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76" && (
                     <a
                       href={`https://stellar.expert/explorer/testnet/account/${stellarAddress}/assets`}
                       target="_blank"
@@ -333,7 +333,7 @@ export default function Dashboard() {
                       Total badges: {developerBadges.badges.length}
                     </div>
                   </div>
-                ) : stellarAddress === "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER" ? (
+                ) : stellarAddress === "GA3MC2DLXO7AHIITD637JKQCPD466DGWMFQPTJPJYAIE7XC3NRQCSR76" ? (
                   <div className="text-gray-500">
                     <p className="mb-2">🔗 Connect your Stellar address to view badges</p>
                     <p className="text-xs">Your badges are stored on the Stellar blockchain and linked to your address.</p>
@@ -718,8 +718,8 @@ function OrganizationJobs({ userId, router }: { userId?: string, router: any }) 
                 <div className="flex items-center justify-between">
                   <span>
                     {job.status === 'open' ? '🟢 Open' :
-                     job.status === 'in_progress' ? '🟡 In Progress' :
-                     job.status === 'completed' ? '✅ Completed' : job.status}
+                      job.status === 'in_progress' ? '🟡 In Progress' :
+                        job.status === 'completed' ? '✅ Completed' : job.status}
                   </span>
                   {orgStellarAddress && job.escrowId && (
                     <a
