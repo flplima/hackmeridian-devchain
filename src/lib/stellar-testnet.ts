@@ -22,6 +22,43 @@ export interface Certificate {
 
 export class StellarTestnetService {
   /**
+   * Fund an account using Friendbot (testnet only)
+   */
+  static async fundAccount(publicKey: string): Promise<boolean> {
+    try {
+      console.log(`💰 Funding account ${publicKey} via Friendbot`)
+
+      const response = await fetch(`https://friendbot.stellar.org?addr=${publicKey}`)
+      if (response.ok) {
+        console.log(`✅ Account ${publicKey} funded successfully`)
+        return true
+      } else {
+        console.error(`❌ Failed to fund account: ${response.status} ${response.statusText}`)
+        return false
+      }
+    } catch (error) {
+      console.error('❌ Error funding account:', error)
+      return false
+    }
+  }
+
+  /**
+   * Ensure account exists and is funded
+   */
+  static async ensureAccountExists(publicKey: string): Promise<boolean> {
+    try {
+      // Try to load the account
+      await server.loadAccount(publicKey)
+      console.log(`✅ Account ${publicKey} already exists`)
+      return true
+    } catch (error) {
+      // Account doesn't exist, try to fund it
+      console.log(`🔄 Account ${publicKey} doesn't exist, funding via Friendbot`)
+      return await this.fundAccount(publicKey)
+    }
+  }
+
+  /**
    * Create a simple token/payment to represent a certificate
    * Since the smart contract might not be deployed, we'll use a payment with memo
    */
@@ -34,17 +71,24 @@ export class StellarTestnetService {
     try {
       console.log(`🚀 Emitting certificate for ${eventName} to ${recipientAddress}`)
 
+      // Ensure both issuer and recipient accounts exist
+      const issuerExists = await this.ensureAccountExists(issuerKeypair.publicKey())
+      if (!issuerExists) {
+        throw new Error(`Failed to create/fund issuer account: ${issuerKeypair.publicKey()}`)
+      }
+
+      const recipientExists = await this.ensureAccountExists(recipientAddress)
+      if (!recipientExists) {
+        throw new Error(`Failed to create/fund recipient account: ${recipientAddress}`)
+      }
+
       // Load issuer account
       const issuerAccount = await server.loadAccount(issuerKeypair.publicKey())
 
-      // Create memo with certificate data
-      const certificateData = JSON.stringify({
-        type: "CERTIFICATE",
-        event_id: eventId,
-        event_name: eventName,
-        recipient: recipientAddress,
-        issued_at: new Date().toISOString()
-      })
+      // Create memo with certificate data (use compact format due to 28 char limit)
+      // Use first 8 chars of eventId to fit in memo limit
+      const shortEventId = eventId.substring(0, 8)
+      const certificateData = `CERT:${shortEventId}`
 
       // Build transaction with a small XLM payment and memo
       const transaction = new TransactionBuilder(issuerAccount, {
@@ -56,7 +100,7 @@ export class StellarTestnetService {
         asset: Asset.native(),
         amount: "0.0000001", // Minimal XLM amount (1 stroop)
       }))
-      .addMemo(Memo.text(certificateData.slice(0, 28))) // Stellar memo limit
+      .addMemo(Memo.text(certificateData)) // Use compact format that fits in 28 chars
       .setTimeout(300)
       .build()
 

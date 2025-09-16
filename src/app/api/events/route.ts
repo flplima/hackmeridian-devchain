@@ -3,7 +3,7 @@ import { serverDataStore, Event } from "@/lib/server-data-store"
 
 export async function GET() {
   try {
-    const events = serverDataStore.getEvents()
+    const events = await serverDataStore.getEvents()
     return NextResponse.json({ events })
   } catch (error) {
     console.error("Error fetching events:", error)
@@ -26,13 +26,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { v4: uuidv4 } = require('uuid')
     const event: Event = {
-      id: `event_${Date.now()}`,
+      id: uuidv4(),
       title,
       tags: tags || [],
     }
 
-    serverDataStore.addEvent(event)
+    await serverDataStore.addEvent(event)
 
     return NextResponse.json({
       event,

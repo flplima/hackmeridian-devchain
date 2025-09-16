@@ -1,8 +1,9 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
+import EmitBadgeModal from "@/components/EmitBadgeModal"
 
 interface Event {
   id: string
@@ -20,67 +21,47 @@ interface GitHubProfile {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
+  const { user, logout, loading: authLoading } = useAuth()
   const router = useRouter()
   const [githubProfile, setGithubProfile] = useState<GitHubProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [testSession, setTestSession] = useState<{
-    provider: string
-    name: string
-    email: string
-    image: string
-    user?: {
-      name: string
-      email: string
-      image: string
-    }
-  } | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [availableEvents, setAvailableEvents] = useState<Event[]>([])
   const [stellarAddress, setStellarAddress] = useState<string | null>(null)
   const [stellarAddressLoading, setStellarAddressLoading] = useState(false)
+  const [emitBadgeModalOpen, setEmitBadgeModalOpen] = useState(false)
+  const [selectedEventForBadge, setSelectedEventForBadge] = useState<Event | null>(null)
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({})
+
+  // Determine user type from auth context
+  const isDeveloper = user?.userType === "developer"
+  const isOrganization = user?.userType === "organization"
 
   useEffect(() => {
-    let testSessionData = null
-    let parsedTestSession = null
+    console.log("Dashboard useEffect - authLoading:", authLoading, "user:", !!user)
 
-    if (typeof window !== 'undefined') {
-      testSessionData = localStorage.getItem("test-session")
-      if (testSessionData) {
-        parsedTestSession = JSON.parse(testSessionData)
-        setTestSession(parsedTestSession)
-        if (parsedTestSession.provider === "github") {
-          setGithubProfile({
-            name: parsedTestSession.name,
-            login: "flplima",
-            avatar_url: parsedTestSession.image,
-            public_repos: 42,
-            followers: 123,
-            following: 56,
-          })
-        }
-        setLoading(false)
-      }
-    }
-
-    if (status === "loading" && !testSessionData) return
-
-    if (!session && !testSessionData) {
-      router.push("/auth/signin")
+    if (authLoading) {
+      console.log("Auth still loading, waiting...")
       return
     }
 
-    // Temporarily disabled - provider check needs custom session type
-    // if ((session?.provider === "github") || (testSessionData && parsedTestSession?.provider === "github")) {
-    //   if (!testSessionData) {
-    //     fetchGitHubProfile()
-    //   }
-    // } else {
-      setLoading(false)
-    // }
+    if (!user) {
+      console.log("No user found, redirecting to signin")
+      // Add a small delay to prevent immediate redirect loops
+      setTimeout(() => {
+        router.push("/auth/signin")
+      }, 100)
+      return
+    }
 
+    console.log("User found, loading dashboard for user:", user)
+    setLoading(false)
     loadEvents()
-  }, [session, status, router]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (isOrganization) {
+      loadBadgeCounts()
+    }
+  }, [user, authLoading, router, isOrganization]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadEvents = async () => {
     try {
@@ -94,6 +75,31 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching events:", error)
+    }
+  }
+
+  const loadBadgeCounts = async () => {
+    try {
+      if (!user || !isOrganization) {
+        console.log("User is not an organization, skipping badge count loading")
+        return
+      }
+
+      // Use the user's ID (which should be the UUID) as the organization identifier
+      const organizationId = user.id || "unknown-org"
+
+      console.log(`Loading badge counts for organization: ${organizationId}`)
+
+      const response = await fetch(`/api/blockchain/badges?organizationId=${encodeURIComponent(organizationId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log(`Loaded badge counts:`, data.badgeCounts)
+        setBadgeCounts(data.badgeCounts || {})
+      } else {
+        console.error("Failed to fetch badge counts:", response.status, response.statusText)
+      }
+    } catch (error) {
+      console.error("Error fetching badge counts:", error)
     }
   }
 
@@ -113,35 +119,14 @@ export default function Dashboard() {
   //   setLoading(false)
   // }
 
-  const fetchStellarAddress = useCallback(async () => {
-    // Get user identifier - use email from testSession or user.email from session
-    const userEmail = testSession?.email || session?.user?.email
-    if (!userEmail) return
-
-    setStellarAddressLoading(true)
-    try {
-      const response = await fetch(`/api/user/address?userId=${encodeURIComponent(userEmail)}`)
-      if (response.ok) {
-        const data = await response.json()
-        setStellarAddress(data.stellarAddress)
-      } else {
-        console.error("Failed to fetch Stellar address")
-      }
-    } catch (error) {
-      console.error("Error fetching Stellar address:", error)
-    }
-    setStellarAddressLoading(false)
-  }, [testSession, session])
-
-  // Load Stellar address when session is available
+  // Simplified stellar address for demo - not needed for organization users
   useEffect(() => {
-    const userEmail = testSession?.email || session?.user?.email
-    if (userEmail && !stellarAddress && !stellarAddressLoading) {
-      fetchStellarAddress()
+    if (isDeveloper) {
+      setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
     }
-  }, [testSession, session, stellarAddress, stellarAddressLoading, fetchStellarAddress])
+  }, [isDeveloper])
 
-  if (status === "loading" || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -149,14 +134,9 @@ export default function Dashboard() {
     )
   }
 
-  const currentSession = testSession || session
-  if (!currentSession) {
+  if (!user) {
     return null
   }
-
-  // Temporarily hardcode user type since auth is disabled
-  const isDeveloper = testSession ? testSession.provider === "github" : true
-  const isOrganization = testSession ? testSession.provider === "linkedin" : false
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,12 +147,7 @@ export default function Dashboard() {
               DevChain Dashboard
             </h1>
             <button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem("test-session")
-                }
-                signOut()
-              }}
+              onClick={() => logout()}
               className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
             >
               Sign Out
@@ -309,16 +284,30 @@ export default function Dashboard() {
                     Organization Profile
                   </h3>
                   <div className="flex items-center space-x-4">
-                    <img
-                      src={currentSession.user?.image || (testSession?.image) || "/default-org.png"}
-                      alt="Organization Logo"
-                      className="h-16 w-16 rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/64/0066CC/FFFFFF?text=S"
-                      }}
-                    />
+                    {user.image ? (
+                      <img
+                        src={user.image}
+                        alt="Organization Logo"
+                        className="h-16 w-16 rounded-full"
+                        onError={(e) => {
+                          // Hide the image and show fallback div instead
+                          e.currentTarget.style.display = 'none'
+                          if (e.currentTarget.nextElementSibling) {
+                            e.currentTarget.nextElementSibling.style.display = 'flex'
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center"
+                      style={{ display: user.image ? 'none' : 'flex' }}
+                    >
+                      <span className="text-white font-bold text-xl">
+                        {(user.name || "Organization").charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                     <div>
-                      <h4 className="text-xl font-semibold">{currentSession.user?.name || testSession?.name || "Organization"}</h4>
+                      <h4 className="text-xl font-semibold">{user.name || "Organization"}</h4>
                       <p className="text-gray-600">Organization</p>
                       {isOrganization && (
                         <p className="text-sm text-gray-500 mt-1">
@@ -384,7 +373,14 @@ export default function Dashboard() {
                         <div key={event.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-lg">{event.title}</h4>
+                              <div className="flex items-center gap-3">
+                                <h4 className="font-semibold text-lg">{event.title}</h4>
+                                {isOrganization && (
+                                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">
+                                    {badgeCounts[event.id] || 0} badges
+                                  </span>
+                                )}
+                              </div>
                               {event.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {event.tags.map((tag: string, index: number) => (
@@ -400,10 +396,13 @@ export default function Dashboard() {
                             </div>
                             <div className="ml-4">
                               <button
-                                onClick={() => router.push(`/events/${event.id}/manage`)}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+                                onClick={() => {
+                                  setSelectedEventForBadge(event)
+                                  setEmitBadgeModalOpen(true)
+                                }}
+                                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm"
                               >
-                                Manage Event
+                                🏆 Emit Badges
                               </button>
                             </div>
                           </div>
@@ -419,6 +418,18 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Emit Badge Modal */}
+      {selectedEventForBadge && (
+        <EmitBadgeModal
+          isOpen={emitBadgeModalOpen}
+          onClose={() => {
+            setEmitBadgeModalOpen(false)
+            setSelectedEventForBadge(null)
+          }}
+          event={selectedEventForBadge}
+        />
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { serverDataStore } from "@/lib/server-data-store"
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,18 +20,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (org === "stellar") {
-      return NextResponse.json({
-        success: true,
-        redirectUrl: "/dashboard",
-        user: {
-          name: "Stellar",
-          email: "contact@stellar.org",
-          image: "https://stellar.org/wp-content/uploads/2023/06/stellar-logo.svg",
-          description: "Blockchain Network for Smart Contracts, DeFi, Payments & Asset Tokenization",
-          website: "https://stellar.org",
-          provider: "linkedin"
-        }
-      })
+      const stellarOrg = await serverDataStore.getOrganizationById("550e8400-e29b-41d4-a716-446655442000")
+
+      if (stellarOrg) {
+        return NextResponse.json({
+          success: true,
+          redirectUrl: "/dashboard",
+          user: {
+            id: stellarOrg.id,
+            name: stellarOrg.name,
+            email: "contact@stellar.org",
+            image: "https://stellar.org/wp-content/uploads/2023/06/stellar-logo.svg",
+            description: stellarOrg.description || "Building the open financial system",
+            website: "https://stellar.org",
+            provider: "linkedin"
+          }
+        })
+      }
     }
 
     return NextResponse.json({ error: "Invalid test credentials" }, { status: 400 })

@@ -34,30 +34,48 @@ export interface UserAddress {
   createdAt: string
 }
 
+export interface Organization {
+  id: string
+  name: string
+  description?: string
+  createdAt: string
+}
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  githubHandle: string
+  githubId: number
+}
+
 class ServerDataStore {
   private events: Event[] = []
   private badges: Badge[] = []
   private jobs: Job[] = []
   private userAddresses: UserAddress[] = []
+  private users: User[] = []
+  private organizations: Organization[] = []
   private initialized = false
 
   // Events
-  addEvent(event: Event): void {
+  async addEvent(event: Event): Promise<void> {
+    await this.ensureInitialized()
     this.events.push(event)
   }
 
-  getEvents(): Event[] {
-    this.ensureInitialized()
+  async getEvents(): Promise<Event[]> {
+    await this.ensureInitialized()
     return this.events
   }
 
-  getEventById(id: string): Event | undefined {
-    this.ensureInitialized()
+  async getEventById(id: string): Promise<Event | undefined> {
+    await this.ensureInitialized()
     return this.events.find(event => event.id === id)
   }
 
-  updateEvent(id: string, updates: Partial<Event>): Event | null {
-    this.ensureInitialized()
+  async updateEvent(id: string, updates: Partial<Event>): Promise<Event | null> {
+    await this.ensureInitialized()
     const index = this.events.findIndex(event => event.id === id)
     if (index !== -1) {
       this.events[index] = { ...this.events[index], ...updates }
@@ -67,69 +85,149 @@ class ServerDataStore {
   }
 
   // Badges
-  addBadge(badge: Badge): void {
-    this.ensureInitialized()
+  async addBadge(badge: Badge): Promise<void> {
+    await this.ensureInitialized()
     this.badges.push(badge)
   }
 
-  getBadges(): Badge[] {
-    this.ensureInitialized()
+  async getBadges(): Promise<Badge[]> {
+    await this.ensureInitialized()
     return this.badges
   }
 
-  getBadgesByRecipient(recipientAddress: string): Badge[] {
-    this.ensureInitialized()
+  async getBadgesByRecipient(recipientAddress: string): Promise<Badge[]> {
+    await this.ensureInitialized()
     return this.badges.filter(badge => badge.recipientAddress === recipientAddress)
   }
 
-  getBadgesByEvent(eventId: string): Badge[] {
-    this.ensureInitialized()
+  async getBadgesByEvent(eventId: string): Promise<Badge[]> {
+    await this.ensureInitialized()
     return this.badges.filter(badge => badge.eventId === eventId)
   }
 
   // Jobs
-  addJob(job: Job): void {
-    this.ensureInitialized()
+  async addJob(job: Job): Promise<void> {
+    await this.ensureInitialized()
     this.jobs.push(job)
   }
 
-  getJobs(): Job[] {
-    this.ensureInitialized()
+  async getJobs(): Promise<Job[]> {
+    await this.ensureInitialized()
     return this.jobs
   }
 
-  getJobById(id: string): Job | undefined {
-    this.ensureInitialized()
+  async getJobById(id: string): Promise<Job | undefined> {
+    await this.ensureInitialized()
     return this.jobs.find(job => job.id === id)
   }
 
-  getJobsByEmployer(employerName: string): Job[] {
-    this.ensureInitialized()
+  async getJobsByEmployer(employerName: string): Promise<Job[]> {
+    await this.ensureInitialized()
     return this.jobs.filter(job => job.employerName === employerName)
   }
 
   // User Addresses
-  addUserAddress(userAddress: UserAddress): void {
-    this.ensureInitialized()
+  async addUserAddress(userAddress: UserAddress): Promise<void> {
+    await this.ensureInitialized()
     // Remove existing mapping for this user
     this.userAddresses = this.userAddresses.filter(ua => ua.userId !== userAddress.userId)
     // Add new mapping
     this.userAddresses.push(userAddress)
   }
 
-  getUserAddress(userId: string): UserAddress | undefined {
-    this.ensureInitialized()
+  async getUserAddress(userId: string): Promise<UserAddress | undefined> {
+    await this.ensureInitialized()
     return this.userAddresses.find(ua => ua.userId === userId)
   }
 
-  getUserByAddress(stellarAddress: string): UserAddress | undefined {
-    this.ensureInitialized()
+  async getUserByAddress(stellarAddress: string): Promise<UserAddress | undefined> {
+    await this.ensureInitialized()
     return this.userAddresses.find(ua => ua.stellarAddress === stellarAddress)
   }
 
-  getAllUserAddresses(): UserAddress[] {
-    this.ensureInitialized()
+  async getAllUserAddresses(): Promise<UserAddress[]> {
+    await this.ensureInitialized()
     return this.userAddresses
+  }
+
+  // Users
+  async addUser(user: User): Promise<void> {
+    await this.ensureInitialized()
+    // Remove existing user with same ID
+    this.users = this.users.filter(u => u.id !== user.id)
+    // Add new/updated user
+    this.users.push(user)
+  }
+
+  async getUsers(): Promise<User[]> {
+    await this.ensureInitialized()
+    return this.users
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    await this.ensureInitialized()
+    return this.users.find(user => user.id === id)
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    await this.ensureInitialized()
+    return this.users.find(user => user.email === email)
+  }
+
+  async getUserByGithubHandle(githubHandle: string): Promise<User | undefined> {
+    await this.ensureInitialized()
+    return this.users.find(user => user.githubHandle === githubHandle)
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    await this.ensureInitialized()
+    if (!query || query.trim().length === 0) {
+      return this.users
+    }
+
+    const searchTerm = query.toLowerCase().trim()
+    return this.users.filter(user =>
+      user.name.toLowerCase().includes(searchTerm) ||
+      user.email.toLowerCase().includes(searchTerm) ||
+      (user.githubHandle && user.githubHandle.toLowerCase().includes(searchTerm))
+    )
+  }
+
+  // Organizations
+  async addOrganization(organization: Organization): Promise<void> {
+    await this.ensureInitialized()
+    // Remove existing organization with same ID
+    this.organizations = this.organizations.filter(o => o.id !== organization.id)
+    // Add new/updated organization
+    this.organizations.push(organization)
+  }
+
+  async getOrganizations(): Promise<Organization[]> {
+    await this.ensureInitialized()
+    return this.organizations
+  }
+
+  async getOrganizationById(id: string): Promise<Organization | undefined> {
+    await this.ensureInitialized()
+    return this.organizations.find(org => org.id === id)
+  }
+
+  async getOrganizationByName(name: string): Promise<Organization | undefined> {
+    await this.ensureInitialized()
+    return this.organizations.find(org => org.name.toLowerCase() === name.toLowerCase())
+  }
+
+  async searchOrganizations(query: string): Promise<Organization[]> {
+    await this.ensureInitialized()
+    if (!query || query.trim().length === 0) {
+      return this.organizations
+    }
+
+    const searchTerm = query.toLowerCase().trim()
+    return this.organizations.filter(org =>
+      org.name.toLowerCase().includes(searchTerm) ||
+      (org.description && org.description.toLowerCase().includes(searchTerm))
+    )
   }
 
   // Utility methods
@@ -138,39 +236,78 @@ class ServerDataStore {
     this.badges = []
     this.jobs = []
     this.userAddresses = []
+    this.users = []
+    this.organizations = []
     this.initialized = false
   }
 
   // Initialize with some sample data
-  private initializeSampleData(): void {
+  private async initializeSampleData(): Promise<void> {
     if (this.initialized) return
 
-    // Sample events
+    // Sample events with fixed UUIDs for consistency
     const sampleEvents: Event[] = [
       {
-        id: "event_sample_1",
+        id: "550e8400-e29b-41d4-a716-446655440000",
         title: "Stellar Blockchain Hackathon 2024",
         tags: ["stellar", "blockchain", "defi", "web3"]
       },
       {
-        id: "event_sample_2",
+        id: "550e8400-e29b-41d4-a716-446655440001",
         title: "React Workshop",
         tags: ["react", "javascript", "frontend"]
       },
       {
-        id: "event_sample_3",
+        id: "550e8400-e29b-41d4-a716-446655440002",
         title: "AI/ML Bootcamp",
         tags: ["ai", "machine-learning", "python"]
       }
     ]
 
     sampleEvents.forEach(event => this.events.push(event))
+
+    // Fetch and initialize sample user from GitHub
+    try {
+      const response = await fetch('https://api.github.com/users/flplima')
+      if (response.ok) {
+        const githubUser = await response.json()
+        const sampleUser: User = {
+          id: githubUser.id.toString(), // Use GitHub user ID
+          name: githubUser.name || githubUser.login,
+          email: githubUser.email || `${githubUser.login}@github.local`,
+          githubHandle: githubUser.login,
+          githubId: githubUser.id
+        }
+        this.users.push(sampleUser)
+      }
+    } catch (error) {
+      console.error('Error fetching GitHub user:', error)
+      // Fallback sample user
+      const fallbackUser: User = {
+        id: "89628972",
+        name: "Felipe Lima",
+        email: "flplima@github.local",
+        githubHandle: "flplima",
+        githubId: 89628972
+      }
+      this.users.push(fallbackUser)
+    }
+
+    // Sample organization with fixed UUID for consistency
+    const stellarOrganization: Organization = {
+      id: "550e8400-e29b-41d4-a716-446655442000",
+      name: "Stellar Development Foundation",
+      description: "Building the open financial system",
+      createdAt: new Date().toISOString(),
+    }
+
+    this.organizations.push(stellarOrganization)
     this.initialized = true
   }
 
-  private ensureInitialized(): void {
+  private async ensureInitialized(): Promise<void> {
     if (!this.initialized) {
-      this.initializeSampleData()
+      await this.initializeSampleData()
     }
   }
 }

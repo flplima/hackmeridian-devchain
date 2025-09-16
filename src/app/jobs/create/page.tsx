@@ -1,11 +1,11 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
 export default function CreateJob() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: "",
@@ -17,19 +17,19 @@ export default function CreateJob() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (status === "loading") return
+    if (authLoading) return
 
-    if (!session) {
+    if (!user) {
       router.push("/auth/signin")
       return
     }
 
     // Skip provider check for now since auth is disabled
-    // if (session.provider !== "linkedin") {
+    // if (user.provider !== "linkedin") {
     //   router.push("/dashboard")
     //   return
     // }
-  }, [session, status, router])
+  }, [user, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +60,7 @@ export default function CreateJob() {
     setLoading(false)
   }
 
-  if (status === "loading") {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
@@ -68,7 +68,7 @@ export default function CreateJob() {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
