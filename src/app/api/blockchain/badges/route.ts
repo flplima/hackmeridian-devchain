@@ -6,13 +6,40 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const organizationId = searchParams.get('organizationId')
+    const recipientAddress = searchParams.get('recipientAddress')
     const eventId = searchParams.get('eventId')
 
-    if (!organizationId) {
+    if (!organizationId && !recipientAddress) {
       return NextResponse.json(
-        { error: "Organization ID is required" },
+        { error: "Either organizationId or recipientAddress is required" },
         { status: 400 }
       )
+    }
+
+    // Handle recipient address lookup (for developers viewing their badges)
+    if (recipientAddress) {
+      console.log(`🔍 Fetching badges for recipient address: ${recipientAddress}`)
+
+      try {
+        const badges = await BlockchainService.getBadgesByRecipient(recipientAddress)
+        return NextResponse.json({
+          badges,
+          count: badges.length,
+          recipientAddress,
+          debug: {
+            badgesFound: badges.length,
+            searchType: 'recipient'
+          }
+        })
+      } catch (error) {
+        console.error("Error fetching badges for recipient:", error)
+        return NextResponse.json({
+          badges: [],
+          count: 0,
+          recipientAddress,
+          error: "Failed to fetch badges from blockchain"
+        })
+      }
     }
 
     // Determine organization stellar address

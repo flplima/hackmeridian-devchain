@@ -1,20 +1,34 @@
 import { NextResponse } from "next/server"
-import { Keypair } from "@stellar/stellar-sdk"
+import { UserAddressService } from "@/lib/user-address-service"
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // Simplified for now - remove auth check
-    // const session = await auth()
+    const body = await request.json()
+    const { userId, masterToken } = body
 
-    // if (!session || !session.user) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    // }
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      )
+    }
 
-    const keypair = Keypair.random()
+    // Use deterministic address generation
+    const stellarAddress = await UserAddressService.getStellarAddressByUserId(
+      userId,
+      masterToken
+    )
+
+    if (!stellarAddress) {
+      return NextResponse.json(
+        { error: "Failed to create Stellar address" },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
-      publicKey: keypair.publicKey(),
-      message: "Stellar account created successfully"
+      publicKey: stellarAddress,
+      message: "Stellar account created successfully using deterministic generation"
     })
   } catch (error) {
     console.error("Error setting up user:", error)

@@ -17,9 +17,140 @@ export interface BlockchainBadge {
   dateIssued: string
   contractAddress: string
   certificateId?: number
+  imageUrl?: string
+  title?: string
+  description?: string
 }
 
 export class BlockchainService {
+  /**
+   * Extract metadata from blockchain transaction data entries
+   */
+  private static async extractMetadataFromTransaction(transactionHash: string, shortEventId: string): Promise<{
+    imageUrl?: string
+    title?: string
+    description?: string
+    eventName?: string
+  }> {
+    try {
+      const transaction = await server.transactions()
+        .transaction(transactionHash)
+        .call()
+
+      // Get the transaction effects to find data entries
+      const effects = await server.effects()
+        .forTransaction(transactionHash)
+        .call()
+
+      let metadata: any = {}
+      const metadataChunks: { [key: number]: string } = {}
+
+      // Look for metadata in data entries
+      for (const effect of effects.records) {
+        if (effect.type === 'data_created' || effect.type === 'data_updated') {
+          const dataEffect = effect as any
+          const dataName = dataEffect.name
+
+          if (dataName && dataName.includes(`cert_meta_${shortEventId}`)) {
+            const dataValue = dataEffect.value
+
+            if (dataName === `cert_meta_${shortEventId}`) {
+              // Single chunk metadata
+              try {
+                const decodedValue = Buffer.from(dataValue, 'base64').toString('utf8')
+                metadata = JSON.parse(decodedValue)
+                break
+              } catch (e) {
+                console.log('Error parsing single metadata chunk:', e)
+              }
+            } else {
+              // Multi-chunk metadata (cert_meta_eventId_0, cert_meta_eventId_1, etc.)
+              const parts = dataName.split('_')
+              if (parts.length >= 4) {
+                const chunkIndex = parseInt(parts[parts.length - 1] || '0')
+                try {
+                  const decodedValue = Buffer.from(dataValue, 'base64').toString('utf8')
+                  metadataChunks[chunkIndex] = decodedValue
+                  console.log(`📊 Chunk ${chunkIndex}: ${decodedValue}`)
+                } catch (e) {
+                  console.log('Error parsing metadata chunk:', e)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Reconstruct multi-chunk metadata if needed
+      if (Object.keys(metadataChunks).length > 0) {
+        const sortedChunks = Object.keys(metadataChunks)
+          .map(k => parseInt(k))
+          .sort((a, b) => a - b)
+          .map(k => metadataChunks[k])
+          .join('')
+
+        console.log(`🔧 Attempting to parse reconstructed JSON (${sortedChunks.length} chars):`, sortedChunks)
+
+        try {
+          // Try to parse as complete JSON first
+          metadata = JSON.parse(sortedChunks)
+          console.log('✅ Successfully parsed complete JSON metadata')
+        } catch (e) {
+          console.log('❌ Error parsing reconstructed JSON, trying individual field extraction:', e)
+
+          // Try to fix incomplete JSON by adding missing closing characters
+          let fixedJson = sortedChunks.trim()
+
+          // Count open/close braces to see if we need to close the JSON
+          const openBraces = (fixedJson.match(/\{/g) || []).length
+          const closeBraces = (fixedJson.match(/\}/g) || []).length
+
+          if (openBraces > closeBraces) {
+            // Add missing closing quotes and braces
+            if (!fixedJson.endsWith('"') && !fixedJson.endsWith('}')) {
+              fixedJson += '"'
+            }
+            fixedJson += '}'.repeat(openBraces - closeBraces)
+
+            console.log(`🔧 Attempting to fix JSON by adding ${openBraces - closeBraces} closing braces`)
+            try {
+              metadata = JSON.parse(fixedJson)
+              console.log('✅ Successfully parsed fixed JSON metadata')
+            } catch (fixError) {
+              console.log('❌ Failed to parse fixed JSON, falling back to regex extraction')
+            }
+          }
+
+          // If still failed, extract fields individually using regex
+          if (!metadata || Object.keys(metadata).length === 0) {
+            const imageUrlMatch = sortedChunks.match(/"imageUrl"\s*:\s*"([^"]*(?:\\.[^"]*)*)"?/)
+            const titleMatch = sortedChunks.match(/"title"\s*:\s*"([^"]*)"/)
+            const descriptionMatch = sortedChunks.match(/"description"\s*:\s*"([^"]*)"/)
+            const eventNameMatch = sortedChunks.match(/"eventName"\s*:\s*"([^"]*)"/)
+
+            metadata = {
+              imageUrl: imageUrlMatch ? imageUrlMatch[1] : undefined,
+              title: titleMatch ? titleMatch[1] : undefined,
+              description: descriptionMatch ? descriptionMatch[1] : undefined,
+              eventName: eventNameMatch ? eventNameMatch[1] : undefined
+            }
+            console.log('📊 Extracted partial metadata via regex:', metadata)
+          }
+        }
+      }
+
+      return {
+        imageUrl: metadata.imageUrl,
+        title: metadata.title,
+        description: metadata.description,
+        eventName: metadata.eventName
+      }
+    } catch (error) {
+      console.log(`Could not extract metadata for transaction ${transactionHash}:`, error)
+      return {}
+    }
+  }
+
   /**
    * Get all badges issued by a specific organization address
    */
@@ -237,6 +368,122 @@ export class BlockchainService {
     } catch (error) {
       console.error(`❌ Account ${address} not found or error:`, error)
       return { exists: false, account: null, balances: [] }
+    }
+  }
+
+  /**
+   * Get all badges received by a specific recipient address (developer)
+   */
+  static async getBadgesByRecipient(recipientAddress: string): Promise<BlockchainBadge[]> {
+    try {
+      console.log(`🔍 Fetching badges received by: ${recipientAddress}`)
+
+      // Get all incoming payments to the recipient address
+      let payments
+      try {
+        payments = await server.payments()
+          .forAccount(recipientAddress)
+          .order('desc')
+          .limit(200)
+          .call()
+      } catch (error) {
+        if (error.name === 'NotFoundError') {
+          console.log(`📝 Account ${recipientAddress} not found on Stellar network (may not be funded yet)`)
+          return []
+        }
+        throw error
+      }
+
+      const badges: BlockchainBadge[] = []
+
+      console.log(`📋 Processing ${payments.records.length} incoming payment records`)
+
+      for (const payment of payments.records) {
+        console.log(`🔍 Checking incoming payment: ${payment.transaction_hash}, type: ${payment.type}, to: ${payment.to}, amount: ${payment.amount}`)
+
+        if (payment.type === 'payment' && payment.to === recipientAddress && payment.amount === '0.0000001') {
+          try {
+            // Get transaction details to check memo and extract certificate data
+            const transaction = await server.transactions()
+              .transaction(payment.transaction_hash)
+              .call()
+
+            // Handle the memo properly
+            let memo = ''
+            if (transaction.memo_type && transaction.memo) {
+              if (transaction.memo_type === 'text') {
+                memo = transaction.memo
+              } else if (transaction.memo_type === 'hash' || transaction.memo_type === 'return') {
+                memo = Buffer.from(transaction.memo, 'base64').toString('utf8')
+              }
+            }
+
+            console.log(`📝 Transaction memo: "${memo}"`)
+
+            // Check if this is a certificate/badge transaction
+            const isCertificate = memo.includes('CERTIFICATE') || memo.includes('CERT:')
+            console.log(`🎯 Is certificate: ${isCertificate}`)
+
+            if (isCertificate) {
+              let eventId = ''
+              let eventTitle = 'Achievement Badge'
+
+              // Extract event ID from memo
+              if (memo.startsWith('CERT:')) {
+                eventId = memo.substring(5).trim()
+                console.log(`📝 Extracted event_id from compact memo: ${eventId}`)
+              } else if (memo.includes('"event"')) {
+                try {
+                  // Try to parse as JSON if it looks like JSON
+                  if (memo.startsWith('{')) {
+                    const memoData = JSON.parse(memo)
+                    eventId = memoData.event || ''
+                  } else {
+                    // Extract event from partial JSON
+                    const eventMatch = memo.match(/"event":"([^"]+)"/)
+                    if (eventMatch) {
+                      eventId = eventMatch[1]
+                    }
+                  }
+                } catch (e) {
+                  console.log('📝 Memo appears truncated, extracting available data')
+                }
+              }
+
+              // Extract metadata including image URL
+              const metadata = await this.extractMetadataFromTransaction(payment.transaction_hash, eventId)
+              console.log(`📊 Extracted metadata for ${payment.transaction_hash}:`, metadata)
+
+              const badge: BlockchainBadge = {
+                id: `badge_${payment.transaction_hash}`,
+                eventId: eventId || 'unknown',
+                eventTitle: metadata.eventName || eventTitle,
+                recipientAddress,
+                issuerAddress: payment.from || '',
+                transactionHash: payment.transaction_hash,
+                dateIssued: payment.created_at,
+                contractAddress: CONTRACT_ID,
+                certificateId: undefined,
+                imageUrl: metadata.imageUrl,
+                title: metadata.title,
+                description: metadata.description
+              }
+
+              badges.push(badge)
+              console.log(`🏆 Added badge: ${badge.id} for event ${eventId}`)
+            }
+          } catch (transactionError) {
+            console.error(`❌ Error processing transaction ${payment.transaction_hash}:`, transactionError)
+          }
+        }
+      }
+
+      console.log(`🏆 Found ${badges.length} badges for recipient ${recipientAddress}`)
+      return badges
+
+    } catch (error) {
+      console.error(`❌ Error fetching badges for recipient ${recipientAddress}:`, error)
+      return []
     }
   }
 }

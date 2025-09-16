@@ -38,6 +38,17 @@ export default function Dashboard() {
   const isDeveloper = user?.userType === "developer"
   const isOrganization = user?.userType === "organization"
 
+  // Helper function to get organization name from address
+  const getOrganizationName = (issuerAddress: string): string => {
+    // Map known issuer addresses to organization names
+    const knownOrganizations: Record<string, string> = {
+      'GCR23HMPNGVYEKTVVGQDTVECMBER6DI7NJBD3EQITKRHEHH7GNHUXSIF': 'HackMeridian',
+      // Add more organizations as needed
+    }
+
+    return knownOrganizations[issuerAddress] || `Organization (${issuerAddress.substring(0, 8)}...)`
+  }
+
   useEffect(() => {
     if (authLoading) return
 
@@ -108,12 +119,50 @@ export default function Dashboard() {
 
   const badgeCounts = badgeData?.badgeCounts || {}
 
-  // Simplified stellar address for demo - not needed for organization users
+  // React Query to fetch badges for developer
+  const { data: developerBadges, isLoading: badgesLoading } = useQuery({
+    queryKey: ['developer-badges', stellarAddress],
+    queryFn: async () => {
+      if (!stellarAddress || stellarAddress === "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER") {
+        throw new Error('Valid Stellar address required')
+      }
+      console.log('🔍 Fetching badges for developer address:', stellarAddress)
+      const response = await fetch(`/api/blockchain/badges?recipientAddress=${encodeURIComponent(stellarAddress)}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch developer badges: ${response.status}`)
+      }
+      const data = await response.json()
+      console.log('🏆 Developer badges received:', data)
+      return data
+    },
+    enabled: !!stellarAddress && isDeveloper && stellarAddress !== "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER",
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+  })
+
+  // Fetch developer's real Stellar address
   useEffect(() => {
-    if (isDeveloper) {
-      setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
+    if (isDeveloper && user?.id) {
+      const fetchDeveloperStellarAddress = async () => {
+        try {
+          const response = await fetch(`/api/users/${user.id}/stellar-address`)
+          if (response.ok) {
+            const data = await response.json()
+            setStellarAddress(data.stellarAddress)
+            console.log('✅ Developer Stellar address loaded:', data.stellarAddress)
+          } else {
+            console.log('No Stellar address found for developer, using demo address')
+            setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
+          }
+        } catch (error) {
+          console.error('Error fetching developer Stellar address:', error)
+          setStellarAddress("DEMO_STELLAR_ADDRESS_FOR_DEVELOPER")
+        }
+      }
+
+      fetchDeveloperStellarAddress()
     }
-  }, [isDeveloper])
+  }, [isDeveloper, user?.id])
 
   if (authLoading || loading) {
     return (
@@ -205,10 +254,96 @@ export default function Dashboard() {
 
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Your Certificates
-                </h3>
-                <p className="text-gray-500">No certificates yet. Complete courses or jobs to earn certificates!</p>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Your Certificates & Badges
+                  </h3>
+                  {stellarAddress && stellarAddress !== "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER" && (
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/account/${stellarAddress}/assets`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      View on Stellar Explorer ↗
+                    </a>
+                  )}
+                </div>
+
+                {badgesLoading ? (
+                  <div className="text-gray-500 flex items-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
+                    Loading your badges...
+                  </div>
+                ) : developerBadges?.badges?.length > 0 ? (
+                  <div className="space-y-3">
+                    {developerBadges.badges.map((badge: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center space-x-3">
+                          {badge.imageUrl ? (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={badge.imageUrl}
+                                alt={badge.title || 'Achievement Badge'}
+                                width={64}
+                                height={64}
+                                className="h-16 w-16 rounded-lg object-cover border-2 border-green-300"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex-shrink-0 w-16 h-16 bg-green-200 rounded-lg flex items-center justify-center">
+                              <span className="text-2xl">🏆</span>
+                            </div>
+                          )}
+                          <div>
+                            <h4 className="font-medium text-green-900">
+                              {badge.title || '🏆 Achievement Badge'}
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              Earned from: {getOrganizationName(badge.issuerAddress) || 'Unknown Organization'}
+                            </p>
+                            <p className="text-xs text-green-600 mt-1">
+                              Date: {badge.dateIssued ? new Date(badge.dateIssued).toLocaleDateString() : 'Unknown'}
+                            </p>
+                            {badge.description && (
+                              <p className="text-xs text-green-600 mt-1">
+                                {badge.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {badge.transactionHash && (
+                            <a
+                              href={`https://stellar.expert/explorer/testnet/tx/${badge.transactionHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              View Transaction ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-xs text-gray-500 mt-4">
+                      Total badges: {developerBadges.badges.length}
+                    </div>
+                  </div>
+                ) : stellarAddress === "DEMO_STELLAR_ADDRESS_FOR_DEVELOPER" ? (
+                  <div className="text-gray-500">
+                    <p className="mb-2">🔗 Connect your Stellar address to view badges</p>
+                    <p className="text-xs">Your badges are stored on the Stellar blockchain and linked to your address.</p>
+                  </div>
+                ) : (
+                  <div className="text-gray-500">
+                    <p className="mb-2">🏆 No badges yet</p>
+                    <p className="text-xs">Complete jobs, courses, or participate in events to earn blockchain certificates!</p>
+                  </div>
+                )}
               </div>
             </div>
 

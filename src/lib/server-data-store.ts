@@ -92,7 +92,11 @@ class ServerDataStore {
   // Events
   async addEvent(event: Event): Promise<void> {
     await this.ensureInitialized()
-    this.events.push(event)
+    // Prevent duplicates
+    const exists = this.events.find(e => e.id === event.id)
+    if (!exists) {
+      this.events.push(event)
+    }
   }
 
   async getEvents(): Promise<Event[]> {
@@ -238,6 +242,7 @@ class ServerDataStore {
     this.users = this.users.filter(u => u.id !== user.id)
     // Add new/updated user
     this.users.push(user)
+    await this.saveToFile()
   }
 
   async getUsers(): Promise<User[]> {
@@ -281,6 +286,7 @@ class ServerDataStore {
     this.organizations = this.organizations.filter(o => o.id !== organization.id)
     // Add new/updated organization
     this.organizations.push(organization)
+    await this.saveToFile()
   }
 
   async getOrganizations(): Promise<Organization[]> {
@@ -326,6 +332,13 @@ class ServerDataStore {
   // Initialize with some sample data
   private async initializeSampleData(): Promise<void> {
     if (this.initialized) return
+
+    // Don't initialize sample data if we already have data from file
+    if (this.events.length > 0 || this.users.length > 0 || this.organizations.length > 0) {
+      console.log('📝 Skipping sample data initialization - data already exists from file')
+      this.initialized = true
+      return
+    }
 
     // Sample events with fixed UUIDs for consistency
     const sampleEvents: Event[] = [
@@ -405,20 +418,47 @@ class ServerDataStore {
         console.log(`File content length: ${fileContent.length}`)
 
         const data = JSON.parse(fileContent)
-        this.events = data.events || []
+
+        // Deduplicate arrays by ID
+        this.events = this.deduplicateById(data.events || [])
         this.badges = data.badges || []
-        this.jobs = data.jobs || []
-        this.userAddresses = data.userAddresses || []
-        this.users = data.users || []
-        this.organizations = data.organizations || []
-        this.escrows = data.escrows || []
-        console.log(`✅ Loaded data from ${this.dataFile}: ${this.jobs.length} jobs, ${this.escrows.length} escrows`)
+        this.jobs = this.deduplicateById(data.jobs || [])
+        this.userAddresses = this.deduplicateByUserId(data.userAddresses || [])
+        this.users = this.deduplicateById(data.users || [])
+        this.organizations = this.deduplicateById(data.organizations || [])
+        this.escrows = this.deduplicateById(data.escrows || [])
+
+        console.log(`✅ Loaded and deduplicated data from ${this.dataFile}:`)
+        console.log(`  Events: ${this.events.length}, Jobs: ${this.jobs.length}, Users: ${this.users.length}`)
+        console.log(`  Organizations: ${this.organizations.length}, Escrows: ${this.escrows.length}`)
       } else {
         console.log(`File ${this.dataFile} does not exist`)
       }
     } catch (error) {
       console.error('❌ Could not load data from file:', error)
     }
+  }
+
+  private deduplicateById<T extends { id: string }>(items: T[]): T[] {
+    const seen = new Set<string>()
+    return items.filter(item => {
+      if (seen.has(item.id)) {
+        return false
+      }
+      seen.add(item.id)
+      return true
+    })
+  }
+
+  private deduplicateByUserId<T extends { userId: string }>(items: T[]): T[] {
+    const seen = new Set<string>()
+    return items.filter(item => {
+      if (seen.has(item.userId)) {
+        return false
+      }
+      seen.add(item.userId)
+      return true
+    })
   }
 
   private async saveToFile(): Promise<void> {

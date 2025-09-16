@@ -14,12 +14,13 @@ export async function POST(request: NextRequest) {
     }
 
     const event: Event = {
-      id: `event_${Date.now()}`,
+      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       title,
       tags: tags || [],
     }
 
-    serverDataStore.addEvent(event)
+    await serverDataStore.addEvent(event)
+    console.log(`✅ Event created: ${event.title} (ID: ${event.id})`)
 
     return NextResponse.json({
       event,

@@ -27,38 +27,76 @@
         "machine-learning",
         "python"
       ]
-    },
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "title": "Stellar Blockchain Hackathon 2024",
-      "tags": [
-        "stellar",
-        "blockchain",
-        "defi",
-        "web3"
-      ]
-    },
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440001",
-      "title": "React Workshop",
-      "tags": [
-        "react",
-        "javascript",
-        "frontend"
-      ]
-    },
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440002",
-      "title": "AI/ML Bootcamp",
-      "tags": [
-        "ai",
-        "machine-learning",
-        "python"
-      ]
     }
   ],
   "badges": [],
   "jobs": [
+    {
+      "id": "job_1758022255666_1vdvayybp",
+      "title": "Test",
+      "description": "aaa",
+      "amount": "30.902030263388305",
+      "usdAmount": "12",
+      "tags": [
+        "asas"
+      ],
+      "requirements": [
+        "2"
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T11:30:55.666Z",
+      "status": "accepted",
+      "escrowId": "5deeab00-5672-4090-bd65-5f310642fd42",
+      "stellarAmount": "309020303",
+      "freelancerId": "20775579",
+      "acceptedAt": "2025-09-16T11:32:16.839Z"
+    },
+    {
+      "id": "job_1758018188498_g8md1ly82",
+      "title": "FInal Title",
+      "description": "test",
+      "amount": "285.0663742382179",
+      "usdAmount": "111",
+      "tags": [
+        "test"
+      ],
+      "requirements": [
+        ""
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T10:23:08.499Z",
+      "status": "accepted",
+      "escrowId": "e31aa1a0-08a6-4021-8c32-329f58c0e214",
+      "stellarAmount": "2850663742",
+      "freelancerId": "550e8400-e29b-41d4-a716-446655442000",
+      "acceptedAt": "2025-09-16T11:31:48.768Z"
+    },
+    {
+      "id": "job_1758016362406_4x0a7ve25",
+      "title": "tes",
+      "description": "asdf",
+      "amount": "109.0909090909091",
+      "usdAmount": "12",
+      "tags": [
+        "a"
+      ],
+      "requirements": [
+        ""
+      ],
+      "employerId": "550e8400-e29b-41d4-a716-446655442000",
+      "employerName": "Test Employer",
+      "employerImage": "/default-org.png",
+      "createdAt": "2025-09-16T09:52:42.407Z",
+      "status": "accepted",
+      "escrowId": "7ca36746-2556-48c7-ac77-d6c051fd76ce",
+      "stellarAmount": "1090909091",
+      "freelancerId": "20775579",
+      "acceptedAt": "2025-09-16T10:35:57.984Z"
+    },
     {
       "id": "job_1758016156331_k56cpik81",
       "title": "test",
@@ -78,46 +116,6 @@
       "status": "open",
       "escrowId": "9003fedc-4a24-423a-b8f5-5b4ada4da98f",
       "stellarAmount": "30992765797"
-    },
-    {
-      "id": "job_1758016362406_4x0a7ve25",
-      "title": "tes",
-      "description": "asdf",
-      "amount": "109.0909090909091",
-      "usdAmount": "12",
-      "tags": [
-        "a"
-      ],
-      "requirements": [
-        ""
-      ],
-      "employerId": "550e8400-e29b-41d4-a716-446655442000",
-      "employerName": "Test Employer",
-      "employerImage": "/default-org.png",
-      "createdAt": "2025-09-16T09:52:42.407Z",
-      "status": "open",
-      "escrowId": "7ca36746-2556-48c7-ac77-d6c051fd76ce",
-      "stellarAmount": "1090909091"
-    },
-    {
-      "id": "job_1758018188498_g8md1ly82",
-      "title": "FInal Title",
-      "description": "test",
-      "amount": "285.0663742382179",
-      "usdAmount": "111",
-      "tags": [
-        "test"
-      ],
-      "requirements": [
-        ""
-      ],
-      "employerId": "550e8400-e29b-41d4-a716-446655442000",
-      "employerName": "Test Employer",
-      "employerImage": "/default-org.png",
-      "createdAt": "2025-09-16T10:23:08.499Z",
-      "status": "open",
-      "escrowId": "e31aa1a0-08a6-4021-8c32-329f58c0e214",
-      "stellarAmount": "2850663742"
     }
   ],
   "userAddresses": [
@@ -125,16 +123,114 @@
       "userId": "550e8400-e29b-41d4-a716-446655442000",
       "stellarAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
       "createdAt": "2025-09-16T09:49:16.410Z"
+    },
+    {
+      "userId": "20775579",
+      "stellarAddress": "GCL6R6HYZC7J4DTVJQ3NOEFZFVLZECYJPI72O5OOQ4G7JZYNVYXP2UVW",
+      "createdAt": "2025-09-16T10:35:57.984Z"
+    },
+    {
+      "userId": "531960",
+      "stellarAddress": "GAUZUQLXRX74QAHN7LXKBN6DAZC4U52SOH2Z4L2A66IHNXAJOZKKNU6Q",
+      "createdAt": "2025-09-16T11:26:46.725Z"
+    },
+    {
+      "userId": "57576566",
+      "stellarAddress": "GDZ73W7IGJORFJ2VNVRA6TR5K3R7BCZTCIRVR6SD4XRGKUJ7F2IDCWKO",
+      "createdAt": "2025-09-16T11:26:46.728Z"
+    },
+    {
+      "userId": "27268838",
+      "stellarAddress": "GBET2SYYEQX3TJWZEZRWBHZ5ECXCEWWWHNKFJBOKXJRH2KCAEMYU4ETC",
+      "createdAt": "2025-09-16T11:26:46.732Z"
+    },
+    {
+      "userId": "13479945",
+      "stellarAddress": "GBRZUHWNG6BS32JCWID3Y6SMKW4TIK7KOL57KEJQ4BQNT4NUNO3WTRZP",
+      "createdAt": "2025-09-16T11:26:46.732Z"
+    },
+    {
+      "userId": "547923",
+      "stellarAddress": "GBA7ZDXF4MG3RWKJUSUYRZVJN7MRMC2T5GTDC273PKUTEWRKTS74WOJX",
+      "createdAt": "2025-09-16T11:26:46.734Z"
+    },
+    {
+      "userId": "6078816",
+      "stellarAddress": "GAXOX3E4V4CCVXNGGPBWUO2LM4HSMTUAIEFLFMAVDE32VWBPC534R4DZ",
+      "createdAt": "2025-09-16T11:26:46.743Z"
+    },
+    {
+      "userId": "6692364",
+      "stellarAddress": "GAMZV6JHQD2FIUAIV3BIQN2WZSCFCU4DE7JIQTZRSF4BEDARVKBUSPLK",
+      "createdAt": "2025-09-16T11:26:46.744Z"
+    },
+    {
+      "userId": "14101776",
+      "stellarAddress": "GBGLQMZD7QBLTDBBVXA5OH7YDK7FWEB52CAQDFZY5FN34UQ73YPJUPF7",
+      "createdAt": "2025-09-16T11:26:46.744Z"
+    },
+    {
+      "userId": "11526201",
+      "stellarAddress": "GCZMXEOUXEOI2SPS7DQVEEAF7KSIKPJQST43VX6UQJC6AWNAGA2IHOZX",
+      "createdAt": "2025-09-16T11:26:46.747Z"
+    },
+    {
+      "userId": "4061208",
+      "stellarAddress": "GBJXKG5S4KUTVXB2WZRXWUR4SZX5TGWL4TP2WBCXCDRUCK737H5IUGWL",
+      "createdAt": "2025-09-16T11:26:46.755Z"
+    },
+    {
+      "userId": "4923963",
+      "stellarAddress": "GDWWWAFCA7DHQIUI5ESBMAATXVV7YY6QJDKHYLB7TMHGXNRWWKTFJIDZ",
+      "createdAt": "2025-09-16T11:26:50.530Z"
+    },
+    {
+      "userId": "19675658",
+      "stellarAddress": "GBSJWK6YLB7OH3YVOUIRRS2CURBFRBWSTP34MP7W5F4FTEHUORX3EKQR",
+      "createdAt": "2025-09-16T11:26:50.531Z"
+    },
+    {
+      "userId": "17676929",
+      "stellarAddress": "GCQET7GBJBX6RSHQNBYYFFMQMJLE5D5QXEZXWBQIZB2R4JXUKD4MVR34",
+      "createdAt": "2025-09-16T11:26:50.533Z"
+    },
+    {
+      "userId": "4805099",
+      "stellarAddress": "GAHYSORBOD4KC3WF27AGOGTALEXE5RVHZRUUVDESNMNKG2W4UNZNLVD7",
+      "createdAt": "2025-09-16T11:26:50.534Z"
+    },
+    {
+      "userId": "15898299",
+      "stellarAddress": "GC6WZDD2KUT3OQ5IPKNAEGMHKFYUCFLKCRH3ZO3Z52ZCD76NWFD4RJHP",
+      "createdAt": "2025-09-16T11:26:50.535Z"
+    },
+    {
+      "userId": "796918",
+      "stellarAddress": "GDZUAQQSXRQ24VAXASJG2NL6UMYOXYE3YFQMBYOH2NO237LNVBD4THMK",
+      "createdAt": "2025-09-16T11:26:50.536Z"
+    },
+    {
+      "userId": "610717",
+      "stellarAddress": "GDL6WCO5XHZGGZJYA2MOGOQTFL3XQEXFQCYNEWTF66OY2VS2QJEJIXQ2",
+      "createdAt": "2025-09-16T11:26:50.537Z"
+    },
+    {
+      "userId": "31892961",
+      "stellarAddress": "GBTNIWRVYEXFT6KUI2TZI6ZCX7MSK3SJC2VZ7NCM6VYDTVRY5UC4YZQU",
+      "createdAt": "2025-09-16T11:26:50.540Z"
+    },
+    {
+      "userId": "69821619",
+      "stellarAddress": "GDSKYMJXGBSXDJQOY2PD7Z6ITRFHWJOYDZXXLOH55PMO2EXV7SLY7FEW",
+      "createdAt": "2025-09-16T11:26:50.540Z"
+    },
+    {
+      "userId": "4911643",
+      "stellarAddress": "GDIVT5AA25CD5RW55O335H2DDHPZRFHBNQQ42TLR366ZKN7SKE6QNFAA",
+      "createdAt": "2025-09-16T11:26:50.551Z"
     }
   ],
   "users": [
-    {
-      "id": "20775579",
-      "name": "Felipe Lima",
-      "email": "flplima@github.local",
-      "githubHandle": "flplima",
-      "githubId": 20775579
-    },
     {
       "id": "20775579",
       "name": "Felipe Lima",
@@ -149,12 +245,6 @@
       "name": "Stellar Development Foundation",
       "description": "Building the open financial system",
       "createdAt": "2025-09-16T09:49:16.379Z"
-    },
-    {
-      "id": "550e8400-e29b-41d4-a716-446655442000",
-      "name": "Stellar Development Foundation",
-      "description": "Building the open financial system",
-      "createdAt": "2025-09-16T10:23:08.821Z"
     }
   ],
   "escrows": [
@@ -175,10 +265,11 @@
       "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
       "tokenAddress": "XLM",
       "amount": "1090909091",
-      "state": "funded",
+      "state": "accepted",
       "createdAt": "2025-09-16T09:52:42.927Z",
       "deadline": "2025-10-16T09:52:42.927Z",
-      "transactionHash": "mock_funding_1758016362927_def456ghi"
+      "transactionHash": "mock_funding_1758016362927_def456ghi",
+      "payeeAddress": "GCL6R6HYZC7J4DTVJQ3NOEFZFVLZECYJPI72O5OOQ4G7JZYNVYXP2UVW"
     },
     {
       "id": "e31aa1a0-08a6-4021-8c32-329f58c0e214",
@@ -186,10 +277,23 @@
       "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
       "tokenAddress": "XLM",
       "amount": "2850663742",
-      "state": "funded",
+      "state": "accepted",
       "createdAt": "2025-09-16T10:23:09.398Z",
       "deadline": "2025-10-16T10:23:09.398Z",
-      "transactionHash": "mock_funding_1758018189398_6q8079y7e"
+      "transactionHash": "mock_funding_1758018189398_6q8079y7e",
+      "payeeAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2"
+    },
+    {
+      "id": "5deeab00-5672-4090-bd65-5f310642fd42",
+      "jobId": "job_1758022255666_1vdvayybp",
+      "payerAddress": "GBXP2J7AXPV5KBTOXR3PZHVEGV7F3DIJL3QZV2XTTHGRQKTP3KFDVTC2",
+      "tokenAddress": "XLM",
+      "amount": "309020303",
+      "state": "accepted",
+      "createdAt": "2025-09-16T11:30:56.209Z",
+      "deadline": "2025-10-16T11:30:56.209Z",
+      "transactionHash": "mock_funding_1758022256209_fur1d93z7",
+      "payeeAddress": "GCL6R6HYZC7J4DTVJQ3NOEFZFVLZECYJPI72O5OOQ4G7JZYNVYXP2UVW"
     }
   ]
 }

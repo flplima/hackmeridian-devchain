@@ -342,7 +342,11 @@ export default function EmitBadgeModal({ isOpen, onClose, event, job }: EmitBadg
                           ) : userExists === false ? (
                             <div className="p-2 bg-red-50 rounded-md">
                               <p className="text-xs text-red-700">
-                                ❌ User not found in database. The selected developer must be registered to receive payments.
+                                {job ? (
+                                  <>❌ User not found in database. The selected developer must be registered to receive payments.</>
+                                ) : (
+                                  <>⚠️ User not in database, but event badges can still be emitted.</>
+                                )}
                               </p>
                             </div>
                           ) : userExists === true ? (
@@ -372,7 +376,7 @@ export default function EmitBadgeModal({ isOpen, onClose, event, job }: EmitBadg
                       </button>
                       <button
                         onClick={emitBadge}
-                        disabled={emittingBadge || !selectedUser || !getCurrentOrganization()?.id || userExists === false || checkingUser}
+                        disabled={emittingBadge || !selectedUser || !getCurrentOrganization()?.id || (job && userExists === false) || checkingUser}
                         className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
                       >
                         {emittingBadge ? (job ? "Completing Job..." : "Emitting...") : (job ? "🏆 Complete Job & Emit Badge" : "🏆 Emit Badge")}
